@@ -1,0 +1,155 @@
+:root {
+    --azul-marinho: #001F3F;
+    --amarelo: #FFD700;
+    --cinza-claro: #f8f9fa;
+    --cinza-escuro: #6c757d;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--cinza-claro);
+}
+
+.navbar {
+    background-color: var(--azul-marinho) !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.navbar-brand {
+    font-weight: bold;
+    font-size: 1.5rem;
+    color: var(--amarelo) !important;
+}
+
+.sidebar {
+    width: 250px;
+    background-color: var(--azul-marinho);
+    min-height: calc(100vh - 56px);
+    padding: 20px 0;
+    position: fixed;
+    left: 0;
+    top: 56px;
+    overflow-y: auto;
+}
+
+.sidebar .nav-link {
+    color: #fff;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-left: 3px solid transparent;
+    transition: all 0.3s;
+}
+
+.sidebar .nav-link:hover,
+.sidebar .nav-link.active {
+    background-color: rgba(255, 215, 0, 0.1);
+    border-left-color: var(--amarelo);
+    color: var(--amarelo);
+}
+
+.main-content {
+    margin-left: 250px;
+    padding: 30px;
+    min-height: calc(100vh - 56px);
+}
+
+.metric-card {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    text-align: center;
+    border-top: 4px solid var(--azul-marinho);
+}
+
+.metric-card h5 {
+    color: var(--cinza-escuro);
+    font-size: 0.9rem;
+    margin-bottom: 10px;
+}
+
+.metric-card .number {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--azul-marinho);
+}
+
+.card {
+    border: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border-radius: 8px;
+}
+
+.card-header {
+    background-color: var(--azul-marinho);
+    color: white;
+    font-weight: bold;
+    border-radius: 8px 8px 0 0;
+}
+
+.btn-primary {
+    background-color: var(--azul-marinho) !important;
+    border-color: var(--azul-marinho) !important;
+}
+
+.btn-primary:hover {
+    background-color: #001a2e !important;
+}
+
+.btn-secondary {
+    background-color: var(--cinza-escuro) !important;
+    border-color: var(--cinza-escuro) !important;
+}
+
+.btn-warning {
+    background-color: var(--amarelo) !important;
+    border-color: var(--amarelo) !important;
+    color: var(--azul-marinho) !important;
+}
+
+.table {
+    background-color: white;
+}
+
+.table thead {
+    background-color: var(--azul-marinho);
+    color: white;
+}
+
+.alert-success {
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+    color: #155724;
+}
+
+.alert-danger {
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+    color: #721c24;
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        width: 100%;
+        position: relative;
+        min-height: auto;
+        top: 0;
+    }
+
+    .main-content {
+        margin-left: 0;
+        padding: 15px;
+    }
+
+    .metric-card {
+        margin-bottom: 15px;
+    }
+}
