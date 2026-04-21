@@ -10,21 +10,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $cpf_cnpj = $_POST['cpf_cnpj'] ?? '';
     $telefone = $_POST['telefone'] ?? '';
     $email = $_POST['email'] ?? '';
-    $endereco = $_POST['endereco'] ?? '';
+    $cep = $_POST['cep'] ?? '';
+    $rua = $_POST['rua'] ?? '';
+    $numero = $_POST['numero'] ?? '';
+    $bairro = $_POST['bairro'] ?? '';
+    $cidade = $_POST['cidade'] ?? '';
+    $estado = $_POST['estado'] ?? '';
+    $endereco = "$rua, $numero - $bairro - $cidade, $estado - CEP: $cep";
     $action = $_POST['action'] ?? '';
 
     if ($action === 'criar') {
         try {
-            $stmt = $pdo->prepare('INSERT INTO clientes (nome, cpf_cnpj, telefone, email, endereco) VALUES (?, ?, ?, ?, ?)');
-            $stmt->execute([$nome, $cpf_cnpj, $telefone, $email, $endereco]);
-            $mensagem = 'Cliente cadastrado com sucesso!';
-            $tipo_mensagem = 'success';
-        } catch (PDOException $e) {
-            if (strpos($e->getMessage(), 'Duplicate entry') !== false) {
-                $mensagem = 'CPF/CNPJ já cadastrado!';
+            $stmt = $pdo->prepare('SELECT COUNT(*) FROM clientes WHERE cpf_cnpj = ?');
+            $stmt->execute([$cpf_cnpj]);
+            if ($stmt->fetchColumn() > 0) {
+                $mensagem = 'Este CPF/CNPJ já está cadastrado!';
+                $tipo_mensagem = 'danger';
             } else {
-                $mensagem = 'Erro ao cadastrar cliente';
+                $stmt = $pdo->prepare('INSERT INTO clientes (nome, cpf_cnpj, telefone, email, endereco) VALUES (?, ?, ?, ?, ?)');
+                $stmt->execute([$nome, $cpf_cnpj, $telefone, $email, $endereco]);
+                $mensagem = 'Cliente adicionado com sucesso!';
+                $tipo_mensagem = 'success';
             }
+        } catch (PDOException $e) {
+            $mensagem = 'Erro ao adicionar cliente';
             $tipo_mensagem = 'danger';
         }
     } elseif ($action === 'editar') {
@@ -54,6 +63,8 @@ if (isset($_GET['delete'])) {
 }
 
 $clientes = $pdo->query('SELECT * FROM clientes ORDER BY criado_em DESC')->fetchAll();
+$total_clientes = count($clientes);
+
 $cliente_edicao = null;
 
 if (isset($_GET['edit'])) {
@@ -111,7 +122,7 @@ if (isset($_GET['edit'])) {
         <div class="main-content w-100">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <div>
-                    <h1>Cadastro de Clientes</h1>
+                    <h1>Clientes</h1>
                     <p class="text-muted">Gerenciar clientes da oficina</p>
                 </div>
                 <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalCliente">
@@ -129,10 +140,10 @@ if (isset($_GET['edit'])) {
 
             <div class="card">
                 <div class="card-header">
-                    <i class="bi bi-list"></i> Lista de Clientes (<?php echo count($clientes); ?> cadastrados)
+                    <i class="bi bi-people"></i> Clientes Cadastrados (<?php echo $total_clientes; ?>)
                 </div>
                 <div class="card-body">
-                    <?php if (count($clientes) > 0): ?>
+                    <?php if ($total_clientes > 0): ?>
                         <div class="table-responsive">
                             <table class="table table-hover">
                                 <thead>
@@ -169,9 +180,9 @@ if (isset($_GET['edit'])) {
                     <?php else: ?>
                         <div class="text-center py-5">
                             <i class="bi bi-inbox" style="font-size: 3rem; color: #ccc;"></i>
-                            <p class="text-muted mt-3">Nenhum cliente cadastrado ainda.</p>
+                            <p class="text-muted mt-3">Nenhum cliente cadastrado.</p>
                             <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalCliente">
-                                <i class="bi bi-plus"></i> Cadastrar Primeiro Cliente
+                                <i class="bi bi-plus"></i> Adicionar Primeiro Cliente
                             </button>
                         </div>
                     <?php endif; ?>
@@ -181,7 +192,7 @@ if (isset($_GET['edit'])) {
     </div>
 
     <div class="modal fade" id="modalCliente" tabindex="-1">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">
@@ -197,25 +208,66 @@ if (isset($_GET['edit'])) {
                             <input type="hidden" name="id" value="<?php echo $cliente_edicao['id']; ?>">
                         <?php endif; ?>
 
-                        <div class="mb-3">
-                            <label for="nome" class="form-label">Nome <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="nome" name="nome" value="<?php echo $cliente_edicao ? htmlspecialchars($cliente_edicao['nome']) : ''; ?>" required>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="nome" class="form-label">Nome <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="nome" name="nome" value="<?php echo $cliente_edicao ? htmlspecialchars($cliente_edicao['nome']) : ''; ?>" placeholder="João Silva" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="cpf_cnpj" class="form-label">CPF/CNPJ <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="cpf_cnpj" name="cpf_cnpj" value="<?php echo $cliente_edicao ? htmlspecialchars($cliente_edicao['cpf_cnpj']) : ''; ?>" placeholder="12345678901234" maxlength="14" inputmode="numeric" pattern="[0-9]*" required>
+                            </div>
                         </div>
-                        <div class="mb-3">
-                            <label for="cpf_cnpj" class="form-label">CPF/CNPJ <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="cpf_cnpj" name="cpf_cnpj" value="<?php echo $cliente_edicao ? htmlspecialchars($cliente_edicao['cpf_cnpj']) : ''; ?>" placeholder="000.000.000-00" required>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="telefone" class="form-label">Telefone</label>
+                                <input type="text" class="form-control" id="telefone" name="telefone" value="<?php echo $cliente_edicao ? htmlspecialchars($cliente_edicao['telefone']) : ''; ?>" placeholder="11999999999" maxlength="14" inputmode="numeric" pattern="[0-9]*">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="email" name="email" value="<?php echo $cliente_edicao ? htmlspecialchars($cliente_edicao['email']) : ''; ?>" placeholder="joao@email.com">
+                            </div>
                         </div>
-                        <div class="mb-3">
-                            <label for="telefone" class="form-label">Telefone</label>
-                            <input type="text" class="form-control" id="telefone" name="telefone" value="<?php echo $cliente_edicao ? htmlspecialchars($cliente_edicao['telefone']) : ''; ?>" placeholder="(11) 9999-9999">
+
+                        <hr>
+                        <h6 class="mb-3"><i class="bi bi-geo-alt"></i> Endereço</h6>
+
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="cep" class="form-label">CEP <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="cep" name="cep" placeholder="00000-000" maxlength="9" required>
+                                <small class="text-muted">Digite o CEP e os dados serão preenchidos automaticamente</small>
+                            </div>
                         </div>
-                        <div class="mb-3">
-                            <label for="email" class="form-label">Email</label>
-                            <input type="email" class="form-control" id="email" name="email" value="<?php echo $cliente_edicao ? htmlspecialchars($cliente_edicao['email']) : ''; ?>" placeholder="cliente@email.com">
+
+                        <div class="row">
+                            <div class="col-md-8 mb-3">
+                                <label for="rua" class="form-label">Rua</label>
+                                <input type="text" class="form-control" id="rua" name="rua" placeholder="Rua das Flores" readonly>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="numero" class="form-label">Número</label>
+                                <input type="text" class="form-control" id="numero" name="numero" placeholder="123">
+                            </div>
                         </div>
-                        <div class="mb-3">
-                            <label for="endereco" class="form-label">Endereço</label>
-                            <input type="text" class="form-control" id="endereco" name="endereco" value="<?php echo $cliente_edicao ? htmlspecialchars($cliente_edicao['endereco']) : ''; ?>" placeholder="Rua, número, cidade">
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="bairro" class="form-label">Bairro</label>
+                                <input type="text" class="form-control" id="bairro" name="bairro" placeholder="Centro" readonly>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="cidade" class="form-label">Cidade</label>
+                                <input type="text" class="form-control" id="cidade" name="cidade" placeholder="São Paulo" readonly>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="estado" class="form-label">Estado</label>
+                                <input type="text" class="form-control" id="estado" name="estado" placeholder="SP" readonly maxlength="2">
+                            </div>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -231,5 +283,39 @@ if (isset($_GET['edit'])) {
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="../js/main.js"></script>
+    <script src="../js/masks.js"></script>
+    <script>
+        document.getElementById('cpf_cnpj').addEventListener('input', function() {
+            this.value = this.value.replace(/[^0-9]/g, '').slice(0, 14);
+        });
+
+        document.getElementById('telefone').addEventListener('input', function() {
+            this.value = this.value.replace(/[^0-9]/g, '').slice(0, 14);
+        });
+
+        document.getElementById('cep').addEventListener('blur', function() {
+            let cep = this.value.replace(/\D/g, '');
+
+            if (cep.length === 8) {
+                fetch(`https://viacep.com.br/ws/${cep}/json/`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (!data.erro) {
+                            document.getElementById('rua').value = data.logradouro;
+                            document.getElementById('bairro').value = data.bairro;
+                            document.getElementById('cidade').value = data.localidade;
+                            document.getElementById('estado').value = data.uf;
+                            document.getElementById('numero').focus();
+                        } else {
+                            alert('CEP não encontrado!');
+                        }
+                    })
+                    .catch(error => {
+                        alert('Erro ao buscar CEP. Tente novamente.');
+                        console.error('Erro:', error);
+                    });
+            }
+        });
+    </script>
 </body>
 </html>
