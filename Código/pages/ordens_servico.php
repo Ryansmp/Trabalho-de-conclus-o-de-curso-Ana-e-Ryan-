@@ -1,0 +1,394 @@
+<?php
+require_once '../php/config.php';
+require_once '../php/check_session.php';
+
+$mensagem = '';
+$tipo_mensagem = '';
+
+if (isset($_GET['msg'])) {
+    if ($_GET['msg'] === 'checklist_ok') {
+        $mensagem = 'Checklist salvo com sucesso! A OS agora está em andamento.';
+        $tipo_mensagem = 'success';
+    } elseif ($_GET['msg'] === 'finalizada') {
+        $mensagem = 'Serviço finalizado com sucesso!';
+        $tipo_mensagem = 'success';
+    } elseif ($_GET['msg'] === 'deleted') {
+        $mensagem = 'Ordem de serviço excluída com sucesso!';
+        $tipo_mensagem = 'success';
+    }
+}
+
+// Processar POST para Criar/Editar OS
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao']) && $_POST['acao'] === 'salvar_os') {
+    $id = $_POST['id'] ?? null;
+    $cliente_id = $_POST['cliente_id'] ?? '';
+    $placa = $_POST['placa'] ?? '';
+    $cor = $_POST['cor'] ?? '';
+    $modelo = $_POST['modelo'] ?? '';
+    $descricao_servico = $_POST['descricao_servico'] ?? '';
+
+    $itens_desc = $_POST['item_descricao'] ?? [];
+    $itens_valor = $_POST['item_valor'] ?? [];
+    $total_orcamento = 0;
+    foreach($itens_valor as $v) { $total_orcamento += (float)$v; }
+
+    try {
+        $pdo->beginTransaction();
+
+        if ($id) {
+            $stmt = $pdo->prepare("UPDATE ordens_servico SET cliente_id = ?, placa = ?, cor = ?, modelo = ?, descricao_servico = ?, orcamento = ?, atualizado_em = NOW() WHERE id = ?");
+            $stmt->execute([$cliente_id, $placa, $cor, $modelo, $descricao_servico, $total_orcamento, $id]);
+
+            $stmtDel = $pdo->prepare("DELETE FROM os_itens WHERE os_id = ?");
+            $stmtDel->execute([$id]);
+            $os_id = $id;
+        } else {
+            $numero = 'OS-' . date('YmdHis');
+            $stmt = $pdo->prepare("INSERT INTO ordens_servico (numero, cliente_id, placa, cor, modelo, descricao_servico, orcamento, status) VALUES (?, ?, ?, ?, ?, ?, ?, 'pendente')");
+            $stmt->execute([$numero, $cliente_id, $placa, $cor, $modelo, $descricao_servico, $total_orcamento]);
+            $os_id = $pdo->lastInsertId();
+        }
+
+        $stmtItem = $pdo->prepare("INSERT INTO os_itens (os_id, descricao, valor) VALUES (?, ?, ?)");
+        for ($i = 0; $i < count($itens_desc); $i++) {
+            if (!empty($itens_desc[$i])) {
+                $stmtItem->execute([$os_id, $itens_desc[$i], $itens_valor[$i]]);
+            }
+        }
+
+        $pdo->commit();
+        header("Location: ordens_servico.php?msg=created");
+        exit;
+    } catch (Exception $e) {
+        $pdo->rollBack();
+        $mensagem = 'Erro ao salvar: ' . $e->getMessage();
+        $tipo_mensagem = 'danger';
+    }
+}
+
+// Processar Exclusão de OS
+if (isset($_GET['deletar_os'])) {
+    $id_deletar = $_GET['deletar_os'];
+    try {
+        $pdo->beginTransaction();
+        $pdo->prepare("DELETE FROM os_itens WHERE os_id = ?")->execute([$id_deletar]);
+        $pdo->prepare("DELETE FROM checklist_entrada WHERE os_id = ?")->execute([$id_deletar]);
+        $pdo->prepare("DELETE FROM checklist_midia WHERE os_id = ?")->execute([$id_deletar]);
+        $pdo->prepare("DELETE FROM ordens_servico WHERE id = ?")->execute([$id_deletar]);
+        $pdo->commit();
+        header("Location: ordens_servico.php?msg=deleted");
+        exit;
+    } catch (Exception $e) {
+        $pdo->rollBack();
+        $mensagem = 'Erro ao excluir OS: ' . $e->getMessage();
+        $tipo_mensagem = 'danger';
+    }
+}
+
+// Buscar TODAS as OS
+$stmt = $pdo->query("SELECT os.*, c.nome as cliente_nome,
+                     (SELECT COUNT(*) FROM checklist_entrada WHERE os_id = os.id) as tem_checklist
+                     FROM ordens_servico os
+                     JOIN clientes c ON os.cliente_id = c.id
+                     ORDER BY os.data_criacao DESC");
+$todas_os = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+$os_pendentes = [];
+$os_em_andamento = [];
+$os_finalizadas = [];
+
+foreach ($todas_os as $os) {
+    $status = strtolower(trim($os['status'] ?? ''));
+    if ($status === 'em_andamento') { $os_em_andamento[] = $os; }
+    elseif ($status === 'finalizada') { $os_finalizadas[] = $os; }
+    else { $os_pendentes[] = $os; }
+}
+
+$stmt = $pdo->query("SELECT id, nome FROM clientes ORDER BY nome");
+$clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+?>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ordens de Serviço - Oficina360</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .sidebar { width: 250px; height: 100vh; background: #1a237e; color: white; position: fixed; left: 0; top: 0; z-index: 1000; }
+        .sidebar a { color: white; text-decoration: none; padding: 15px 20px; display: block; transition: 0.3s; }
+        .sidebar a:hover { background: #283593; }
+        .main-content { margin-left: 250px; padding: 30px; min-height: 100vh; background: #f4f7f6; }
+        .nav-tabs { border: none; margin-bottom: 25px; }
+        .nav-tabs .nav-link { border: none; color: #64748b; font-weight: 600; padding: 12px 25px; border-radius: 8px; margin-right: 10px; }
+        .nav-tabs .nav-link.active { background: #2563EB; color: white; }
+        .os-card { background: white; border-radius: 12px; border: none; box-shadow: 0 4px 12px rgba(0,0,0,0.05); transition: 0.3s; margin-bottom: 20px; }
+        .os-card:hover { transform: translateY(-5px); box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
+        .status-badge { padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; text-transform: uppercase; }
+        .status-pendente { background: #fef3c7; color: #92400e; }
+        .status-andamento { background: #dbeafe; color: #1e40af; }
+        .status-finalizada { background: #dcfce7; color: #166534; }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="p-4 text-center border-bottom border-primary mb-3">
+            <h4 class="mb-0">Oficina360</h4>
+        </div>
+        <a href="../index.php"><i class="bi bi-house-door me-2"></i> Início</a>
+        <a href="clientes.php"><i class="bi bi-people me-2"></i> Clientes</a>
+        <a href="ordens_servico.php" class="bg-primary"><i class="bi bi-file-earmark-text me-2"></i> Ordens de Serviço</a>
+        <a href="estoque.php"><i class="bi bi-box-seam me-2"></i> Estoque</a>
+        <div class="mt-auto p-3" style="position: absolute; bottom: 0; width: 100%;">
+            <a href="../php/logout.php" class="text-warning"><i class="bi bi-box-arrow-right me-2"></i> Sair</a>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="fw-bold text-dark"><i class="bi bi-tools me-2"></i> Gestão de Ordens de Serviço</h3>
+            <button class="btn btn-primary px-4 fw-bold" data-bs-toggle="modal" data-bs-target="#modalOS" onclick="limparFormulario()">
+                <i class="bi bi-plus-lg me-2"></i> NOVA ORDEM DE SERVIÇO
+            </button>
+        </div>
+
+        <?php if ($mensagem): ?>
+            <div class="alert alert-<?php echo $tipo_mensagem; ?> alert-dismissible fade show border-0 shadow-sm mb-4">
+                <i class="bi bi-check-circle-fill me-2"></i> <?php echo $mensagem; ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <?php endif; ?>
+
+        <ul class="nav nav-tabs" id="osTabs" role="tablist">
+            <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#pendente">Aguardando Checklist <span class="badge bg-warning text-dark ms-2"><?php echo count($os_pendentes); ?></span></button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#andamento">Em Andamento <span class="badge bg-primary ms-2"><?php echo count($os_em_andamento); ?></span></button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#finalizada">Finalizadas <span class="badge bg-success ms-2"><?php echo count($os_finalizadas); ?></span></button></li>
+        </ul>
+
+        <div class="tab-content">
+            <!-- ABA PENDENTE -->
+            <div class="tab-pane fade show active" id="pendente">
+                <div class="row">
+                    <?php foreach ($os_pendentes as $os): ?>
+                        <div class="col-md-4">
+                            <div class="os-card p-4">
+                                <div class="d-flex justify-content-between mb-3">
+                                    <span class="fw-bold text-primary">#<?php echo $os['numero']; ?></span>
+                                    <span class="status-badge status-pendente">Pendente</span>
+                                </div>
+                                <h6 class="fw-bold mb-1"><?php echo htmlspecialchars($os['cliente_nome']); ?></h6>
+                                <p class="text-muted small mb-3"><?php echo $os['modelo']; ?> - <?php echo $os['placa']; ?></p>
+                                <div class="d-grid gap-2">
+                                    <a href="checklist.php?os_id=<?php echo $os['id']; ?>" class="btn btn-primary btn-sm fw-bold">FAZER CHECKLIST</a>
+                                    <div class="d-flex gap-2">
+                                        <button class="btn btn-outline-secondary btn-sm flex-grow-1" onclick="editarOS(<?php echo htmlspecialchars(json_encode($os)); ?>)" data-bs-toggle="modal" data-bs-target="#modalOS"><i class="bi bi-pencil me-1"></i> Editar</button>
+                                        <a href="?deletar_os=<?php echo $os['id']; ?>" class="btn btn-outline-danger btn-sm" onclick="return confirm('Excluir esta OS?')"><i class="bi bi-trash"></i></a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+
+            <!-- ABA EM ANDAMENTO -->
+            <div class="tab-pane fade" id="andamento">
+                <div class="row">
+                    <?php foreach ($os_em_andamento as $os): ?>
+                        <div class="col-md-4">
+                            <div class="os-card p-4">
+                                <div class="d-flex justify-content-between mb-3">
+                                    <span class="fw-bold text-primary">#<?php echo $os['numero']; ?></span>
+                                    <span class="status-badge status-andamento">Em Andamento</span>
+                                </div>
+                                <h6 class="fw-bold mb-1"><?php echo htmlspecialchars($os['cliente_nome']); ?></h6>
+                                <p class="text-muted small mb-3"><?php echo $os['modelo']; ?> - <?php echo $os['placa']; ?></p>
+                                <div class="d-grid gap-2">
+                                    <button class="btn btn-success btn-sm fw-bold" onclick="abrirModalFinalizar(<?php echo $os['id']; ?>)">CONCLUIR SERVIÇO</button>
+                                    <a href="checklist.php?os_id=<?php echo $os['id']; ?>" class="btn btn-outline-primary btn-sm">VER CHECKLIST</a>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+
+            <!-- ABA FINALIZADA -->
+            <div class="tab-pane fade" id="finalizada">
+                <div class="row">
+                    <?php foreach ($os_finalizadas as $os): ?>
+                        <div class="col-md-4">
+                            <div class="os-card p-4">
+                                <div class="d-flex justify-content-between mb-3">
+                                    <span class="fw-bold text-primary">#<?php echo $os['numero']; ?></span>
+                                    <span class="status-badge status-finalizada">Finalizada</span>
+                                </div>
+                                <h6 class="fw-bold mb-1"><?php echo htmlspecialchars($os['cliente_nome']); ?></h6>
+                                <p class="text-muted small mb-3"><?php echo $os['modelo']; ?> - <?php echo $os['placa']; ?></p>
+                                <button class="btn btn-outline-dark btn-sm w-100 fw-bold" onclick="verDetalhes(<?php echo $os['id']; ?>)">VER ANTES / DEPOIS</button>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL NOVA/EDITAR OS -->
+    <div class="modal fade" id="modalOS" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold" id="modalTitle">Nova Ordem de Serviço</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST">
+                    <input type="hidden" name="acao" value="salvar_os">
+                    <input type="hidden" name="id" id="os_id">
+                    <div class="modal-body p-4">
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-12">
+                                <label class="form-label fw-bold">Cliente:</label>
+                                <select class="form-select" name="cliente_id" id="os_cliente_id" required>
+                                    <option value="">Selecione o Cliente...</option>
+                                    <?php foreach ($clientes as $c): ?>
+                                        <option value="<?php echo $c['id']; ?>"><?php echo htmlspecialchars($c['nome']); ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Veículo/Modelo:</label>
+                                <input type="text" class="form-control" name="modelo" id="os_modelo" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Placa:</label>
+                                <input type="text" class="form-control" name="placa" id="os_placa" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Cor:</label>
+                                <input type="text" class="form-control" name="cor" id="os_cor" required>
+                            </div>
+                        </div>
+
+                        <h6 class="fw-bold text-primary border-bottom pb-2 mb-3">Itens do Orçamento</h6>
+                        <div id="orcamento-itens">
+                            <div class="row g-2 mb-2">
+                                <div class="col-md-8"><input type="text" class="form-control" name="item_descricao[]" placeholder="Descrição do serviço ou peça"></div>
+                                <div class="col-md-3"><input type="number" step="0.01" class="form-control" name="item_valor[]" placeholder="Valor R$"></div>
+                                <div class="col-md-1"><button type="button" class="btn btn-outline-danger w-100" onclick="this.parentElement.parentElement.remove()"><i class="bi bi-trash"></i></button></div>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-outline-primary btn-sm mt-2 fw-bold" onclick="adicionarItemOrcamento()">+ ADICIONAR ITEM</button>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary px-4 fw-bold">SALVAR ORDEM DE SERVIÇO</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL FINALIZAR -->
+    <div class="modal fade" id="modalFinalizar" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title fw-bold">Concluir Serviço</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form action="finalizar_os.php" method="POST" enctype="multipart/form-data">
+                    <input type="hidden" name="os_id" id="finalizar_os_id">
+                    <div class="modal-body p-4">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Foto do Serviço Finalizado:</label>
+                            <input type="file" class="form-control" name="foto_final" accept="image/*" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Forma de Pagamento:</label>
+                            <select class="form-select" name="forma_pagamento" required>
+                                <option value="">Selecione...</option>
+                                <option value="PIX">PIX</option>
+                                <option value="Dinheiro">Dinheiro</option>
+                                <option value="Cartão de Crédito">Cartão de Crédito</option>
+                                <option value="Cartão de Débito">Cartão de Débito</option>
+                            </select>
+                        </div>
+                        <h6 class="fw-bold text-success border-bottom pb-2 mb-3 mt-4">Checklist de Saída</h6>
+                        <div class="row g-2">
+                            <div class="col-6"><label class="small fw-bold">Farol Alto:</label><select class="form-select form-select-sm" name="saida_farol_alto"><option value="funcionando">Funcionando</option><option value="nao_funcionando">Não Funcionando</option></select></div>
+                            <div class="col-6"><label class="small fw-bold">Farol Baixo:</label><select class="form-select form-select-sm" name="saida_farol_baixo"><option value="funcionando">Funcionando</option><option value="nao_funcionando">Não Funcionando</option></select></div>
+                            <div class="col-6"><label class="small fw-bold">Farolete:</label><select class="form-select form-select-sm" name="saida_farolete"><option value="funcionando">Funcionando</option><option value="nao_funcionando">Não Funcionando</option></select></div>
+                            <div class="col-6"><label class="small fw-bold">Setas:</label><select class="form-select form-select-sm" name="saida_setas"><option value="funcionando">Funcionando</option><option value="nao_funcionando">Não Funcionando</option></select></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="submit" class="btn btn-success w-100 fw-bold">FINALIZAR E SALVAR</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DETALHES -->
+    <div class="modal fade" id="modalDetalhes" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title fw-bold">Comparativo Antes e Depois</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4" id="detalhes-body"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function adicionarItemOrcamento() {
+            const container = document.getElementById('orcamento-itens');
+            const div = document.createElement('div');
+            div.className = 'row g-2 mb-2';
+            div.innerHTML = `
+                <div class="col-md-8"><input type="text" class="form-control" name="item_descricao[]" placeholder="Descrição"></div>
+                <div class="col-md-3"><input type="number" step="0.01" class="form-control" name="item_valor[]" placeholder="Valor"></div>
+                <div class="col-md-1"><button type="button" class="btn btn-outline-danger w-100" onclick="this.parentElement.parentElement.remove()"><i class="bi bi-trash"></i></button></div>
+            `;
+            container.appendChild(div);
+        }
+
+        function limparFormulario() {
+            document.getElementById('os_id').value = '';
+            document.getElementById('os_cliente_id').value = '';
+            document.getElementById('os_modelo').value = '';
+            document.getElementById('os_placa').value = '';
+            document.getElementById('os_cor').value = '';
+            document.getElementById('orcamento-itens').innerHTML = '<div class="row g-2 mb-2"><div class="col-md-8"><input type="text" class="form-control" name="item_descricao[]" placeholder="Descrição"></div><div class="col-md-3"><input type="number" step="0.01" class="form-control" name="item_valor[]" placeholder="Valor"></div><div class="col-md-1"><button type="button" class="btn btn-outline-danger w-100" onclick="this.parentElement.parentElement.remove()"><i class="bi bi-trash"></i></button></div></div>';
+            document.getElementById('modalTitle').innerText = 'Nova Ordem de Serviço';
+        }
+
+        function editarOS(os) {
+            document.getElementById('os_id').value = os.id;
+            document.getElementById('os_cliente_id').value = os.cliente_id;
+            document.getElementById('os_modelo').value = os.modelo;
+            document.getElementById('os_placa').value = os.placa;
+            document.getElementById('os_cor').value = os.cor;
+            document.getElementById('modalTitle').innerText = 'Editar Ordem de Serviço';
+        }
+
+        function abrirModalFinalizar(id) {
+            document.getElementById('finalizar_os_id').value = id;
+            new bootstrap.Modal(document.getElementById('modalFinalizar')).show();
+        }
+
+        function verDetalhes(id) {
+            const body = document.getElementById('detalhes-body');
+            body.innerHTML = '<div class="text-center p-5"><div class="spinner-border text-primary"></div><p class="mt-2">Carregando comparativo...</p></div>';
+            new bootstrap.Modal(document.getElementById('modalDetalhes')).show();
+            fetch(`get_os_detalhes.php?os_id=${id}`).then(r => r.text()).then(html => { body.innerHTML = html; });
+        }
+    </script>
+</body>
+</html>
