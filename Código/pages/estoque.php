@@ -76,7 +76,7 @@ if (isset($_GET['edit'])) {
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container-fluid">
-            <a class="navbar-brand" href="../index.php">🔧 Oficina360</a>
+            <span class="navbar-brand"><i class="bi bi-tools"></i> Oficina360</span>
             <button class="navbar-toggler" type="button" id="sidebarToggle">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -98,9 +98,6 @@ if (isset($_GET['edit'])) {
                 </a>
                 <a href="ordens_servico.php" class="nav-link">
                     <i class="bi bi-file-text"></i> Ordens de Serviço
-                </a>
-                <a href="checklist.php" class="nav-link">
-                    <i class="bi bi-check-square"></i> Checklist
                 </a>
                 <a href="estoque.php" class="nav-link active">
                     <i class="bi bi-box"></i> Estoque

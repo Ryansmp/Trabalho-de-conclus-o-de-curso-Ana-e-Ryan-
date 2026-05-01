@@ -15,6 +15,9 @@ if (isset($_GET['msg'])) {
     } elseif ($_GET['msg'] === 'deleted') {
         $mensagem = 'Ordem de serviço excluída com sucesso!';
         $tipo_mensagem = 'success';
+    } elseif ($_GET['msg'] === 'created') {
+        $mensagem = 'Ordem de serviço criada com sucesso!';
+        $tipo_mensagem = 'success';
     }
 }
 
@@ -115,42 +118,96 @@ $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <title>Ordens de Serviço - Oficina360</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
-    <link rel="stylesheet" href="../css/style.css">
+    <!-- Cache breaker no CSS original -->
+    <link rel="stylesheet" href="../css/style.css?v=<?php echo time(); ?>">
     <style>
-        .sidebar { width: 250px; height: 100vh; background: #1a237e; color: white; position: fixed; left: 0; top: 0; z-index: 1000; }
-        .sidebar a { color: white; text-decoration: none; padding: 15px 20px; display: block; transition: 0.3s; }
-        .sidebar a:hover { background: #283593; }
-        .main-content { margin-left: 250px; padding: 30px; min-height: 100vh; background: #f4f7f6; }
-        .nav-tabs { border: none; margin-bottom: 25px; }
-        .nav-tabs .nav-link { border: none; color: #64748b; font-weight: 600; padding: 12px 25px; border-radius: 8px; margin-right: 10px; }
-        .nav-tabs .nav-link.active { background: #2563EB; color: white; }
-        .os-card { background: white; border-radius: 12px; border: none; box-shadow: 0 4px 12px rgba(0,0,0,0.05); transition: 0.3s; margin-bottom: 20px; }
-        .os-card:hover { transform: translateY(-5px); box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
-        .status-badge { padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; text-transform: uppercase; }
-        .status-pendente { background: #fef3c7; color: #92400e; }
-        .status-andamento { background: #dbeafe; color: #1e40af; }
-        .status-finalizada { background: #dcfce7; color: #166534; }
+        /* Forçando a cor absoluta em todo o documento */
+        :root {
+            --azul-marinho: #1a237e !important;
+            --amarelo: #FFD700 !important;
+        }
+
+        /* Reset de opacidade e filtros que podem clarear a cor */
+        * { opacity: 1 !important; filter: none !important; }
+
+        body { background-color: #f4f7f6 !important; }
+
+        /* Navbar e Sidebar com cor sólida absoluta */
+        .navbar { background-color: #001F3F !important; height: 56px; }
+        .sidebar {
+            top: 56px !important;
+            background-color: #001F3F !important;
+            width: 250px;
+            min-height: calc(100vh - 56px);
+            position: fixed;
+        }
+        .sidebar .nav-link { color: #ffffff !important; border-left: 3px solid transparent; }
+        .sidebar .nav-link.active {
+            background-color: rgba(255, 215, 0, 0.15) !important;
+            color: #FFD700 !important;
+            border-left-color: #FFD700 !important;
+        }
+
+        .main-content { margin-left: 250px; margin-top: 56px; padding: 30px; }
+
+        /* Abas de Status */
+        .nav-tabs .nav-link.active { background-color: #001F3F !important; color: #ffffff !important; }
+
+        /* Botões e Modais com cor sólida */
+        .btn-primary, .modal-header.bg-primary {
+            background-color: #001F3F !important;
+            border-color: #001F3F !important;
+            color: #ffffff !important;
+        }
+
+        /* Modal com fundo transparente */
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.3) !important;
+        }
+
+        .modal-content {
+            background-color: #ffffff !important;
+        }
+        .btn-primary:hover { background-color: #000d1f !important; }
+
+        .os-card { border-top: 4px solid #001F3F !important; }
+
+        /* Ajuste para o modal de Nova OS */
+        #modalOS .modal-header { background-color: #001F3F !important; }
+        #modalOS .btn-primary { background-color: #001F3F !important; }
+
+        /* Remover fundo preto do modal */
+        .modal.show .modal-dialog {
+            background: transparent !important;
+        }
     </style>
 </head>
 <body>
+    <!-- Navbar Superior -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <span class="navbar-brand"><i class="bi bi-tools"></i> Oficina360</span>
+            <div class="ms-auto">
+                <span class="text-white me-3">Administrador</span>
+                <a href="../php/logout.php" class="btn btn-warning btn-sm">Sair</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Sidebar -->
     <div class="sidebar">
-        <div class="p-4 text-center border-bottom border-primary mb-3">
-            <h4 class="mb-0">Oficina360</h4>
-        </div>
-        <a href="../index.php"><i class="bi bi-house-door me-2"></i> Início</a>
-        <a href="clientes.php"><i class="bi bi-people me-2"></i> Clientes</a>
-        <a href="ordens_servico.php" class="bg-primary"><i class="bi bi-file-earmark-text me-2"></i> Ordens de Serviço</a>
-        <a href="estoque.php"><i class="bi bi-box-seam me-2"></i> Estoque</a>
-        <div class="mt-auto p-3" style="position: absolute; bottom: 0; width: 100%;">
-            <a href="../php/logout.php" class="text-warning"><i class="bi bi-box-arrow-right me-2"></i> Sair</a>
-        </div>
+        <a href="../index.php" class="nav-link"><i class="bi bi-house"></i> Início</a>
+        <a href="clientes.php" class="nav-link"><i class="bi bi-people"></i> Clientes</a>
+        <a href="ordens_servico.php" class="nav-link active"><i class="bi bi-file-text"></i> Ordens de Serviço</a>
+        <a href="estoque.php" class="nav-link"><i class="bi bi-box"></i> Estoque</a>
     </div>
 
+    <!-- Main Content -->
     <div class="main-content">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h3 class="fw-bold text-dark"><i class="bi bi-tools me-2"></i> Gestão de Ordens de Serviço</h3>
-            <button class="btn btn-primary px-4 fw-bold" data-bs-toggle="modal" data-bs-target="#modalOS" onclick="limparFormulario()">
-                <i class="bi bi-plus-lg me-2"></i> NOVA ORDEM DE SERVIÇO
+            <button class="btn btn-primary px-4 fw-bold" style="background-color: #1a237e !important;" data-bs-toggle="modal" data-bs-target="#modalOS" onclick="limparFormulario()">
+                <i class="bi bi-plus-lg me-1"></i> NOVA OS
             </button>
         </div>
 
@@ -171,11 +228,14 @@ $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <!-- ABA PENDENTE -->
             <div class="tab-pane fade show active" id="pendente">
                 <div class="row">
+                    <?php if (empty($os_pendentes)): ?>
+                        <div class="col-12 text-center p-5 text-muted bg-white rounded-3 shadow-sm">Nenhuma ordem de serviço aguardando checklist.</div>
+                    <?php endif; ?>
                     <?php foreach ($os_pendentes as $os): ?>
                         <div class="col-md-4">
                             <div class="os-card p-4">
                                 <div class="d-flex justify-content-between mb-3">
-                                    <span class="fw-bold text-primary">#<?php echo $os['numero']; ?></span>
+                                    <span class="fw-bold" style="color: #1a237e !important;">#<?php echo $os['numero']; ?></span>
                                     <span class="status-badge status-pendente">Pendente</span>
                                 </div>
                                 <h6 class="fw-bold mb-1"><?php echo htmlspecialchars($os['cliente_nome']); ?></h6>
@@ -196,18 +256,21 @@ $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <!-- ABA EM ANDAMENTO -->
             <div class="tab-pane fade" id="andamento">
                 <div class="row">
+                    <?php if (empty($os_em_andamento)): ?>
+                        <div class="col-12 text-center p-5 text-muted bg-white rounded-3 shadow-sm">Nenhuma ordem de serviço em andamento.</div>
+                    <?php endif; ?>
                     <?php foreach ($os_em_andamento as $os): ?>
                         <div class="col-md-4">
                             <div class="os-card p-4">
                                 <div class="d-flex justify-content-between mb-3">
-                                    <span class="fw-bold text-primary">#<?php echo $os['numero']; ?></span>
+                                    <span class="fw-bold" style="color: #1a237e !important;">#<?php echo $os['numero']; ?></span>
                                     <span class="status-badge status-andamento">Em Andamento</span>
                                 </div>
                                 <h6 class="fw-bold mb-1"><?php echo htmlspecialchars($os['cliente_nome']); ?></h6>
                                 <p class="text-muted small mb-3"><?php echo $os['modelo']; ?> - <?php echo $os['placa']; ?></p>
                                 <div class="d-grid gap-2">
                                     <button class="btn btn-success btn-sm fw-bold" onclick="abrirModalFinalizar(<?php echo $os['id']; ?>)">CONCLUIR SERVIÇO</button>
-                                    <a href="checklist.php?os_id=<?php echo $os['id']; ?>" class="btn btn-outline-primary btn-sm">VER CHECKLIST</a>
+                                    <a href="checklist.php?os_id=<?php echo $os['id']; ?>" class="btn btn-outline-primary btn-sm" style="color: #1a237e !important; border-color: #1a237e !important;">VER CHECKLIST</a>
                                 </div>
                             </div>
                         </div>
@@ -218,11 +281,14 @@ $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <!-- ABA FINALIZADA -->
             <div class="tab-pane fade" id="finalizada">
                 <div class="row">
+                    <?php if (empty($os_finalizadas)): ?>
+                        <div class="col-12 text-center p-5 text-muted bg-white rounded-3 shadow-sm">Nenhuma ordem de serviço finalizada.</div>
+                    <?php endif; ?>
                     <?php foreach ($os_finalizadas as $os): ?>
                         <div class="col-md-4">
                             <div class="os-card p-4">
                                 <div class="d-flex justify-content-between mb-3">
-                                    <span class="fw-bold text-primary">#<?php echo $os['numero']; ?></span>
+                                    <span class="fw-bold" style="color: #1a237e !important;">#<?php echo $os['numero']; ?></span>
                                     <span class="status-badge status-finalizada">Finalizada</span>
                                 </div>
                                 <h6 class="fw-bold mb-1"><?php echo htmlspecialchars($os['cliente_nome']); ?></h6>
@@ -240,7 +306,7 @@ $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <div class="modal fade" id="modalOS" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content border-0 shadow">
-                <div class="modal-header bg-primary text-white">
+                <div class="modal-header text-white" style="background-color: #1a237e !important;">
                     <h5 class="modal-title fw-bold" id="modalTitle">Nova Ordem de Serviço</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
@@ -272,7 +338,7 @@ $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             </div>
                         </div>
 
-                        <h6 class="fw-bold text-primary border-bottom pb-2 mb-3">Itens do Orçamento</h6>
+                        <h6 class="fw-bold border-bottom pb-2 mb-3" style="color: #1a237e !important;">Itens do Orçamento</h6>
                         <div id="orcamento-itens">
                             <div class="row g-2 mb-2">
                                 <div class="col-md-8"><input type="text" class="form-control" name="item_descricao[]" placeholder="Descrição do serviço ou peça"></div>
@@ -280,11 +346,11 @@ $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 <div class="col-md-1"><button type="button" class="btn btn-outline-danger w-100" onclick="this.parentElement.parentElement.remove()"><i class="bi bi-trash"></i></button></div>
                             </div>
                         </div>
-                        <button type="button" class="btn btn-outline-primary btn-sm mt-2 fw-bold" onclick="adicionarItemOrcamento()">+ ADICIONAR ITEM</button>
+                        <button type="button" class="btn btn-outline-primary btn-sm mt-2 fw-bold" style="color: #1a237e !important; border-color: #1a237e !important;" onclick="adicionarItemOrcamento()">+ ADICIONAR ITEM</button>
                     </div>
                     <div class="modal-footer bg-light">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-primary px-4 fw-bold">SALVAR ORDEM DE SERVIÇO</button>
+                        <button type="submit" class="btn btn-primary px-4 fw-bold" style="background-color: #1a237e !important;">SALVAR ORDEM DE SERVIÇO</button>
                     </div>
                 </form>
             </div>
@@ -304,7 +370,7 @@ $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <div class="modal-body p-4">
                         <div class="mb-3">
                             <label class="form-label fw-bold">Foto do Serviço Finalizado:</label>
-                            <input type="file" class="form-control" name="foto_final" accept="image/*" required>
+                            <input type="file" class="form-control" name="imagem_final" accept="image/*" required>
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-bold">Forma de Pagamento:</label>

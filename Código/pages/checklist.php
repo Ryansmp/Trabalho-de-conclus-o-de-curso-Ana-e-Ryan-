@@ -94,31 +94,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="../css/style.css">
     <style>
-        .sidebar { width: 250px; height: 100vh; background: #1a237e; color: white; position: fixed; left: 0; top: 0; z-index: 1000; }
-        .sidebar a { color: white; text-decoration: none; padding: 15px 20px; display: block; transition: 0.3s; }
-        .sidebar a:hover { background: #283593; }
-        .main-content { margin-left: 250px; padding: 30px; min-height: 100vh; background: #f4f7f6; }
+        body { background-color: #f4f7f6 !important; }
+        .navbar { background-color: #001F3F !important; height: 56px; }
+        .sidebar { width: 250px; background-color: #001F3F !important; color: white; position: fixed; left: 0; top: 56px; height: calc(100vh - 56px); z-index: 1000; overflow-y: auto; }
+        .sidebar a { color: white; text-decoration: none; padding: 12px 20px; display: block; transition: 0.3s; border-left: 3px solid transparent; }
+        .sidebar a:hover { background: rgba(255, 215, 0, 0.1); border-left-color: #FFD700; }
+        .main-content { margin-left: 250px; margin-top: 56px; padding: 30px; min-height: calc(100vh - 56px); background: #f4f7f6; }
         .card { border-radius: 12px; border: none; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        .upload-item { background: #ffffff; padding: 15px; border-radius: 10px; margin-bottom: 12px; border: 1px solid #e0e0e0; transition: 0.3s; }
-        .upload-item:hover { border-color: #2563EB; background: #f8faff; }
-        .media-preview { width: 100%; height: 120px; object-fit: cover; border-radius: 8px; margin-bottom: 8px; }
+        .upload-item { background: #ffffff; padding: 15px; border-radius: 10px; margin-bottom: 12px; border: 2px dashed #e0e0e0; transition: 0.3s; }
+        .upload-item:hover { border-color: #001F3F; background: #f8faff; }
+        .upload-item.drag-over { border-color: #001F3F; background: #e3f2fd; }
+        .media-preview { width: 100%; height: 150px; object-fit: cover; border-radius: 8px; margin-bottom: 8px; cursor: pointer; }
         .media-container { position: relative; }
-        .media-type-icon { position: absolute; top: 5px; right: 5px; background: rgba(0,0,0,0.7); color: white; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; }
-        .section-title { border-left: 4px solid #2563EB; padding-left: 15px; margin-bottom: 20px; color: #1a237e; font-weight: 700; }
+        .media-type-icon { position: absolute; top: 5px; right: 5px; background: rgba(0,0,0,0.7); color: white; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: bold; }
+        .section-title { border-left: 4px solid #001F3F; padding-left: 15px; margin-bottom: 20px; color: #001F3F; font-weight: 700; }
+        .btn-primary { background-color: #001F3F !important; border-color: #001F3F !important; }
+        .btn-primary:hover { background-color: #000d1f !important; border-color: #000d1f !important; }
+        .form-select:focus { border-color: #001F3F !important; box-shadow: 0 0 0 0.2rem rgba(0, 31, 63, 0.25) !important; }
+        .badge { background-color: #001F3F !important; }
     </style>
 </head>
 <body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <span class="navbar-brand"><i class="bi bi-tools"></i> Oficina360</span>
+            <div class="ms-auto">
+                <span class="text-white me-3">Administrador</span>
+                <a href="../php/logout.php" class="btn btn-warning btn-sm">Sair</a>
+            </div>
+        </div>
+    </nav>
+
     <div class="sidebar">
-        <div class="p-4 text-center border-bottom border-primary mb-3">
-            <h4 class="mb-0">Oficina360</h4>
-        </div>
-        <a href="../index.php"><i class="bi bi-house-door me-2"></i> Início</a>
-        <a href="clientes.php"><i class="bi bi-people me-2"></i> Clientes</a>
-        <a href="ordens_servico.php"><i class="bi bi-file-earmark-text me-2"></i> Ordens de Serviço</a>
-        <a href="estoque.php"><i class="bi bi-box-seam me-2"></i> Estoque</a>
-        <div class="mt-auto p-3" style="position: absolute; bottom: 0; width: 100%;">
-            <a href="../php/logout.php" class="text-warning"><i class="bi bi-box-arrow-right me-2"></i> Sair</a>
-        </div>
+        <a href="../index.php" class="nav-link"><i class="bi bi-house"></i> Início</a>
+        <a href="clientes.php" class="nav-link"><i class="bi bi-people"></i> Clientes</a>
+        <a href="ordens_servico.php" class="nav-link"><i class="bi bi-file-text"></i> Ordens de Serviço</a>
+        <a href="estoque.php" class="nav-link"><i class="bi bi-box"></i> Estoque</a>
     </div>
 
     <div class="main-content">
@@ -142,11 +153,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <h6 class="section-title">Documentação Visual</h6>
                         <div class="bg-light p-4 rounded-3 mb-4">
                             <div id="container-uploads">
-                                <div class="upload-item">
+                                <div class="upload-item" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
                                     <div class="row align-items-center">
                                         <div class="col">
-                                            <label class="small text-muted mb-1">Selecione Foto ou Vídeo:</label>
-                                            <input type="file" class="form-control form-control-sm" name="midias[]" accept="image/*,video/*">
+                                            <label class="small text-muted mb-2"><i class="bi bi-cloud-arrow-up"></i> Arraste fotos/vídeos aqui ou clique para selecionar:</label>
+                                            <input type="file" class="form-control form-control-sm" name="midias[]" accept="image/*,video/*" onchange="atualizarNomeArquivo(this)">
+                                            <small class="text-muted d-block mt-1">Formatos suportados: JPG, PNG, MP4, WebM</small>
                                         </div>
                                         <div class="col-auto pt-3">
                                             <button type="button" class="btn btn-link text-danger p-0" onclick="this.closest('.upload-item').remove()"><i class="bi bi-trash fs-5"></i></button>
@@ -154,7 +166,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     </div>
                                 </div>
                             </div>
-                            <button type="button" class="btn btn-outline-primary btn-sm fw-bold" onclick="adicionarCampoUpload()">
+                            <button type="button" class="btn btn-primary btn-sm fw-bold mt-3" onclick="adicionarCampoUpload()">
                                 <i class="bi bi-plus-circle me-1"></i> ADICIONAR MAIS UMA FOTO/VÍDEO
                             </button>
 
@@ -250,15 +262,55 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             div.innerHTML = `
                 <div class="row align-items-center">
                     <div class="col">
-                        <label class="small text-muted mb-1">Selecione Foto ou Vídeo:</label>
-                        <input type="file" class="form-control form-control-sm" name="midias[]" accept="image/*,video/*">
+                        <label class="small text-muted mb-2"><i class="bi bi-cloud-arrow-up"></i> Arraste fotos/vídeos aqui ou clique para selecionar:</label>
+                        <input type="file" class="form-control form-control-sm" name="midias[]" accept="image/*,video/*" onchange="atualizarNomeArquivo(this)">
+                        <small class="text-muted d-block mt-1">Formatos suportados: JPG, PNG, MP4, WebM</small>
                     </div>
                     <div class="col-auto pt-3">
                         <button type="button" class="btn btn-link text-danger p-0" onclick="this.closest('.upload-item').remove()"><i class="bi bi-trash fs-5"></i></button>
                     </div>
                 </div>
             `;
+            div.addEventListener('drop', handleDrop);
+            div.addEventListener('dragover', handleDragOver);
+            div.addEventListener('dragleave', handleDragLeave);
             container.appendChild(div);
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.currentTarget.classList.add('drag-over');
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.currentTarget.classList.remove('drag-over');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.currentTarget.classList.remove('drag-over');
+
+            const files = e.dataTransfer.files;
+            const input = e.currentTarget.querySelector('input[type="file"]');
+            if (input && files.length > 0) {
+                input.files = files;
+                const event = new Event('change', { bubbles: true });
+                input.dispatchEvent(event);
+                atualizarNomeArquivo(input);
+            }
+        }
+
+        function atualizarNomeArquivo(input) {
+            if (input.files && input.files[0]) {
+                const fileName = input.files[0].name;
+                const fileSize = (input.files[0].size / 1024 / 1024).toFixed(2);
+                const label = input.closest('.upload-item').querySelector('label');
+                label.innerHTML = `<i class="bi bi-check-circle-fill text-success"></i> <strong>${fileName}</strong> (${fileSize}MB)`;
+            }
         }
         document.getElementById('formChecklist').addEventListener('submit', function() {
             const btn = document.getElementById('btnSalvar');
