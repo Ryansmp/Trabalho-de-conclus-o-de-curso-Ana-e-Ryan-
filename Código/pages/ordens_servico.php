@@ -1,7 +1,7 @@
 <?php
 require_once '../php/config.php';
 require_once '../php/check_session.php';
-
+/** @var PDO $pdo */
 $mensagem = '';
 $tipo_mensagem = '';
 

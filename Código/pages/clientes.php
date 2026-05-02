@@ -1,6 +1,7 @@
 <?php
 require_once '../php/config.php';
 require_once '../php/check_session.php';
+/** @var PDO $pdo */
 
 $mensagem = '';
 $tipo_mensagem = '';
@@ -66,11 +67,46 @@ $total_clientes = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
 
 $stmt = $pdo->query("SELECT * FROM clientes ORDER BY criado_em DESC");
 $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+function formatarCPF($cpf) {
+    $cpf = preg_replace('/[^0-9]/', '', $cpf);
+    if (strlen($cpf) === 11) {
+        return substr($cpf, 0, 3) . '.' . substr($cpf, 3, 3) . '.' . substr($cpf, 6, 3) . '-' . substr($cpf, 9, 2);
+    }
+    return $cpf;
+}
+
+function formatarCNPJ($cnpj) {
+    $cnpj = preg_replace('/[^0-9]/', '', $cnpj);
+    if (strlen($cnpj) === 14) {
+        return substr($cnpj, 0, 2) . '.' . substr($cnpj, 2, 3) . '.' . substr($cnpj, 5, 3) . '/' . substr($cnpj, 8, 4) . '-' . substr($cnpj, 12, 2);
+    }
+    return $cnpj;
+}
+
+function formatarTelefone($telefone) {
+    $telefone = preg_replace('/[^0-9]/', '', $telefone);
+    if (strlen($telefone) === 11) {
+        return '(' . substr($telefone, 0, 2) . ') ' . substr($telefone, 2, 5) . '-' . substr($telefone, 7, 4);
+    } elseif (strlen($telefone) === 10) {
+        return '(' . substr($telefone, 0, 2) . ') ' . substr($telefone, 2, 4) . '-' . substr($telefone, 6, 4);
+    }
+    return $telefone;
+}
+
+function formatarDocumento($documento) {
+    $documento = preg_replace('/[^0-9]/', '', $documento);
+    if (strlen($documento) === 11) {
+        return formatarCPF($documento);
+    } elseif (strlen($documento) === 14) {
+        return formatarCNPJ($documento);
+    }
+    return $documento;
+}
 ?>
 
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -79,7 +115,6 @@ $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="../css/style.css">
 </head>
-
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container-fluid">
@@ -95,9 +130,8 @@ $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <div class="sidebar">
             <a href="../index.php" class="nav-link"><i class="bi bi-house"></i> Início</a>
             <a href="clientes.php" class="nav-link active"><i class="bi bi-people"></i> Clientes</a>
-            <a href="ordens_servico.php" class="nav-link">
-                <i class="bi bi-file-text"></i> Ordens de Serviço
-            </a>
+            <a href="ordens_servico.php" class="nav-link"><i class="bi bi-file-text"></i> Ordens de Serviço</a>
+
             <a href="estoque.php" class="nav-link"><i class="bi bi-box"></i> Estoque</a>
         </div>
 
@@ -120,6 +154,9 @@ $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         </button>
                     </div>
                     <div class="card-body">
+                        <div class="mb-3">
+                            <input type="text" class="form-control" id="buscaCliente" placeholder="🔍 Buscar por nome, CPF/CNPJ ou telefone...">
+                        </div>
                         <?php if (count($clientes) > 0): ?>
                             <div class="table-responsive">
                                 <table class="table table-hover">
@@ -132,12 +169,12 @@ $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                             <th>Ações</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
+                                    <tbody id="tabelaClientes">
                                         <?php foreach ($clientes as $cliente): ?>
-                                            <tr>
+                                            <tr class="linha-cliente" data-nome="<?php echo strtolower($cliente['nome']); ?>" data-cpf="<?php echo strtolower($cliente['cpf_cnpj']); ?>" data-telefone="<?php echo strtolower($cliente['telefone']); ?>">
                                                 <td><?php echo htmlspecialchars($cliente['nome']); ?></td>
-                                                <td><?php echo htmlspecialchars($cliente['cpf_cnpj']); ?></td>
-                                                <td><?php echo htmlspecialchars($cliente['telefone']); ?></td>
+                                                <td><?php echo htmlspecialchars(formatarDocumento($cliente['cpf_cnpj'])); ?></td>
+                                                <td><?php echo htmlspecialchars(formatarTelefone($cliente['telefone'])); ?></td>
                                                 <td><?php echo htmlspecialchars($cliente['email']); ?></td>
                                                 <td>
                                                     <button class="btn btn-warning btn-sm" onclick="editarCliente(<?php echo $cliente['id']; ?>, '<?php echo htmlspecialchars($cliente['nome']); ?>', '<?php echo htmlspecialchars($cliente['cpf_cnpj']); ?>', '<?php echo htmlspecialchars($cliente['telefone']); ?>', '<?php echo htmlspecialchars($cliente['email']); ?>', '<?php echo htmlspecialchars($cliente['endereco']); ?>')"><i class="bi bi-pencil"></i></button>
@@ -362,7 +399,35 @@ $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
             const modal = new bootstrap.Modal(document.getElementById('modalCliente'));
             modal.show();
         }
+
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const docInput = document.getElementById('doc_input');
+            const telefoneInput = document.getElementById('telefone');
+            const cepInput = document.getElementById('cep');
+
+            docInput.value = docInput.value.replace(/\D/g, '');
+            telefoneInput.value = telefoneInput.value.replace(/\D/g, '');
+            cepInput.value = cepInput.value.replace(/\D/g, '');
+        });
+
+        document.getElementById('buscaCliente').addEventListener('keyup', function() {
+            const busca = this.value.toLowerCase();
+            const linhas = document.querySelectorAll('.linha-cliente');
+            let visiveisCount = 0;
+
+            linhas.forEach(linha => {
+                const nome = linha.getAttribute('data-nome');
+                const cpf = linha.getAttribute('data-cpf');
+                const telefone = linha.getAttribute('data-telefone');
+
+                if (nome.includes(busca) || cpf.includes(busca) || telefone.includes(busca)) {
+                    linha.style.display = '';
+                    visiveisCount++;
+                } else {
+                    linha.style.display = 'none';
+                }
+            });
+        });
     </script>
 </body>
-
 </html>

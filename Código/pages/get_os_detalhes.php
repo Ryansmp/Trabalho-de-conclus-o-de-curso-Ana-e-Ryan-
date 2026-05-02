@@ -1,7 +1,7 @@
 <?php
 require_once '../php/config.php';
 require_once '../php/check_session.php';
-
+/** @var PDO $pdo */
 $os_id = $_GET['os_id'] ?? null;
 if (!$os_id) exit("ID inválido.");
 

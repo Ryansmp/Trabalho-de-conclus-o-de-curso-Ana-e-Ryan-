@@ -1,7 +1,7 @@
 <?php
 require_once '../php/config.php';
 require_once '../php/check_session.php';
-
+/** @var PDO $pdo */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['os_id'])) {
     $os_id = $_POST['os_id'];
     $imagem_final_url = '';

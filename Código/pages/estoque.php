@@ -1,7 +1,7 @@
 <?php
 require '../php/check_session.php';
 require '../php/config.php';
-
+/** @var PDO $pdo */
 $mensagem = '';
 $tipo_mensagem = '';
 
@@ -76,7 +76,7 @@ if (isset($_GET['edit'])) {
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container-fluid">
-            <span class="navbar-brand"><i class="bi bi-tools"></i> Oficina360</span>
+            <a class="navbar-brand" href="../index.php">🔧 Oficina360</a>
             <button class="navbar-toggler" type="button" id="sidebarToggle">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -143,14 +143,7 @@ if (isset($_GET['edit'])) {
                         <div class="number" style="font-size: 1.5rem;">R$ <?php echo number_format($valor_total, 2, ',', '.'); ?></div>
                     </div>
                 </div>
-                <div class="col-md-3 col-sm-6 mb-3">
-                    <div class="metric-card">
-                        <h5>Status</h5>
-                        <div class="number" style="color: <?php echo $pecas_baixo > 0 ? '#ff6b6b' : '#51cf66'; ?>; font-size: 1.2rem;">
-                            <?php echo $pecas_baixo > 0 ? '⚠️ Atenção' : '✅ OK'; ?>
-                        </div>
-                    </div>
-                </div>
+
             </div>
 
             <div class="card">
@@ -166,10 +159,8 @@ if (isset($_GET['edit'])) {
                                         <th>Nome</th>
                                         <th>Descrição</th>
                                         <th>Quantidade</th>
-                                        <th>Mínimo</th>
                                         <th>Preço Unit.</th>
                                         <th>Total</th>
-                                        <th>Status</th>
                                         <th>Ações</th>
                                     </tr>
                                 </thead>
@@ -183,22 +174,10 @@ if (isset($_GET['edit'])) {
                                             <td><strong><?php echo htmlspecialchars($peca['nome']); ?></strong></td>
                                             <td><?php echo htmlspecialchars($peca['descricao'] ?? '-'); ?></td>
                                             <td><?php echo $peca['quantidade']; ?></td>
-                                            <td><?php echo $peca['quantidade_minima']; ?></td>
                                             <td>R$ <?php echo number_format($peca['preco_unitario'], 2, ',', '.'); ?></td>
                                             <td>R$ <?php echo number_format($total_peca, 2, ',', '.'); ?></td>
                                             <td>
-                                                <?php if ($estoque_baixo): ?>
-                                                    <span class="badge bg-danger">
-                                                        <i class="bi bi-exclamation-triangle"></i> Baixo
-                                                    </span>
-                                                <?php else: ?>
-                                                    <span class="badge bg-success">
-                                                        <i class="bi bi-check-circle"></i> OK
-                                                    </span>
-                                                <?php endif; ?>
-                                            </td>
-                                            <td>
-                                                <button class="btn btn-sm btn-info" onclick="editarPeca(<?php echo $peca['id']; ?>, '<?php echo htmlspecialchars($peca['nome']); ?>', '<?php echo htmlspecialchars($peca['descricao']); ?>', <?php echo $peca['quantidade']; ?>, <?php echo $peca['quantidade_minima']; ?>, <?php echo $peca['preco_unitario']; ?>)" data-bs-toggle="modal" data-bs-target="#modalPeca" title="Editar">
+                                                <button class="btn btn-sm btn-info" onclick="editarPeca(<?php echo $peca['id']; ?>, '<?php echo htmlspecialchars($peca['nome']); ?>', '<?php echo htmlspecialchars($peca['descricao']); ?>', <?php echo $peca['quantidade']; ?>, 0, <?php echo $peca['preco_unitario']; ?>)" data-bs-toggle="modal" data-bs-target="#modalPeca" title="Editar">
                                                     <i class="bi bi-pencil"></i>
                                                 </button>
                                                 <a href="?delete=<?php echo $peca['id']; ?>" class="btn btn-sm btn-danger" onclick="return confirm('Tem certeza que deseja deletar esta peça?');" title="Deletar">
@@ -251,10 +230,7 @@ if (isset($_GET['edit'])) {
                             <label for="quantidade" class="form-label">Quantidade <span class="text-danger">*</span></label>
                             <input type="number" class="form-control" id="quantidade" name="quantidade" value="<?php echo $peca_edicao ? $peca_edicao['quantidade'] : '0'; ?>" min="0" required>
                         </div>
-                        <div class="mb-3">
-                            <label for="quantidade_minima" class="form-label">Quantidade Mínima</label>
-                            <input type="number" class="form-control" id="quantidade_minima" name="quantidade_minima" value="<?php echo $peca_edicao ? $peca_edicao['quantidade_minima'] : '5'; ?>" min="1">
-                        </div>
+
                         <div class="mb-3">
                             <label for="preco_unitario" class="form-label">Preço Unitário (R$) <span class="text-danger">*</span></label>
                             <input type="number" class="form-control" id="preco_unitario" name="preco_unitario" value="<?php echo $peca_edicao ? $peca_edicao['preco_unitario'] : '0'; ?>" min="0" step="0.01" required>
@@ -280,7 +256,6 @@ if (isset($_GET['edit'])) {
             document.getElementById('nome').value = nome;
             document.getElementById('descricao').value = descricao;
             document.getElementById('quantidade').value = quantidade;
-            document.getElementById('quantidade_minima').value = quantidade_minima;
             document.getElementById('preco_unitario').value = preco_unitario;
             document.querySelector('.modal-title').innerHTML = '<i class="bi bi-pencil"></i> Editar Peça';
         }
