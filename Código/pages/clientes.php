@@ -3,6 +3,8 @@ require_once '../php/config.php';
 require_once '../php/check_session.php';
 /** @var PDO $pdo */
 
+$eh_mecanico = $_SESSION['usuario_role'] === 'mecanico';
+
 $mensagem = '';
 $tipo_mensagem = '';
 
@@ -120,7 +122,7 @@ function formatarDocumento($documento) {
         <div class="container-fluid">
             <span class="navbar-brand"><i class="bi bi-tools"></i> Oficina360</span>
             <div class="ms-auto">
-                <span class="text-white me-3">Administrador</span>
+                <span class="text-white me-3"><?php echo htmlspecialchars($_SESSION['usuario_nome']); ?></span>
                 <a href="../php/logout.php" class="btn btn-warning btn-sm">Sair</a>
             </div>
         </div>
@@ -137,6 +139,20 @@ function formatarDocumento($documento) {
 
         <div class="main-content">
             <div class="container-fluid">
+                <?php if ($eh_mecanico): ?>
+                    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                        <i class="bi bi-exclamation-triangle"></i> <strong>Acesso Restrito!</strong><br>
+                        Você está logado como <strong>Mecânico</strong>. Você pode visualizar apenas as <strong>Ordens de Serviço</strong>.
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <a href="ordens_servico.php" class="btn btn-primary btn-lg">
+                                <i class="bi bi-arrow-right"></i> Ir para Ordens de Serviço
+                            </a>
+                        </div>
+                    </div>
+                <?php else: ?>
                 <h2 class="mb-4"><i class="bi bi-people"></i> Clientes</h2>
 
                 <?php if ($mensagem): ?>
@@ -429,5 +445,6 @@ function formatarDocumento($documento) {
             });
         });
     </script>
+                <?php endif; ?>
 </body>
 </html>

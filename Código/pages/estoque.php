@@ -2,6 +2,9 @@
 require '../php/check_session.php';
 require '../php/config.php';
 /** @var PDO $pdo */
+
+$eh_mecanico = $_SESSION['usuario_role'] === 'mecanico';
+
 $mensagem = '';
 $tipo_mensagem = '';
 
@@ -106,6 +109,20 @@ if (isset($_GET['edit'])) {
         </nav>
 
         <div class="main-content w-100">
+            <?php if ($eh_mecanico): ?>
+                <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                    <i class="bi bi-exclamation-triangle"></i> <strong>Acesso Restrito!</strong><br>
+                    Você está logado como <strong>Mecânico</strong>. Você pode visualizar apenas as <strong>Ordens de Serviço</strong>.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <a href="ordens_servico.php" class="btn btn-primary btn-lg">
+                            <i class="bi bi-arrow-right"></i> Ir para Ordens de Serviço
+                        </a>
+                    </div>
+                </div>
+            <?php else: ?>
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <div>
                     <h1>Controle de Estoque</h1>
@@ -274,5 +291,6 @@ if (isset($_GET['edit'])) {
 
         document.getElementById('modalPeca').addEventListener('hidden.bs.modal', limparModal);
     </script>
+            <?php endif; ?>
 </body>
 </html>

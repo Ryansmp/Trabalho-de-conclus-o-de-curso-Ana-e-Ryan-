@@ -18,6 +18,12 @@ if (isset($_GET['msg'])) {
     } elseif ($_GET['msg'] === 'created') {
         $mensagem = 'Ordem de serviço criada com sucesso!';
         $tipo_mensagem = 'success';
+    } elseif ($_GET['msg'] === 'erro_finalizacao') {
+        $mensagem = 'Erro ao finalizar a ordem de serviço. Tente novamente.';
+        $tipo_mensagem = 'danger';
+    } elseif ($_GET['msg'] === 'erro_imagem') {
+        $mensagem = 'Erro: Imagem final é obrigatória para concluir o serviço.';
+        $tipo_mensagem = 'danger';
     }
 }
 
@@ -27,6 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao']) && $_POST['ac
     $cliente_id = $_POST['cliente_id'] ?? '';
     $placa = $_POST['placa'] ?? '';
     $cor = $_POST['cor'] ?? '';
+    $marca = $_POST['marca'] ?? '';
     $modelo = $_POST['modelo'] ?? '';
     $descricao_servico = $_POST['descricao_servico'] ?? '';
 
@@ -39,16 +46,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao']) && $_POST['ac
         $pdo->beginTransaction();
 
         if ($id) {
-            $stmt = $pdo->prepare("UPDATE ordens_servico SET cliente_id = ?, placa = ?, cor = ?, modelo = ?, descricao_servico = ?, orcamento = ?, atualizado_em = NOW() WHERE id = ?");
-            $stmt->execute([$cliente_id, $placa, $cor, $modelo, $descricao_servico, $total_orcamento, $id]);
+            $stmt = $pdo->prepare("UPDATE ordens_servico SET cliente_id = ?, placa = ?, cor = ?, marca = ?, modelo = ?, descricao_servico = ?, orcamento = ?, atualizado_em = NOW() WHERE id = ?");
+            $stmt->execute([$cliente_id, $placa, $cor, $marca, $modelo, $descricao_servico, $total_orcamento, $id]);
 
             $stmtDel = $pdo->prepare("DELETE FROM os_itens WHERE os_id = ?");
             $stmtDel->execute([$id]);
             $os_id = $id;
         } else {
             $numero = 'OS-' . date('YmdHis');
-            $stmt = $pdo->prepare("INSERT INTO ordens_servico (numero, cliente_id, placa, cor, modelo, descricao_servico, orcamento, status) VALUES (?, ?, ?, ?, ?, ?, ?, 'pendente')");
-            $stmt->execute([$numero, $cliente_id, $placa, $cor, $modelo, $descricao_servico, $total_orcamento]);
+            $stmt = $pdo->prepare("INSERT INTO ordens_servico (numero, cliente_id, placa, cor, marca, modelo, descricao_servico, orcamento, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pendente')");
+            $stmt->execute([$numero, $cliente_id, $placa, $cor, $marca, $modelo, $descricao_servico, $total_orcamento]);
             $os_id = $pdo->lastInsertId();
         }
 
@@ -62,9 +69,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao']) && $_POST['ac
         $pdo->commit();
         header("Location: ordens_servico.php?msg=created");
         exit;
+    } catch (PDOException $e) {
+        $pdo->rollBack();
+        $mensagem = 'Erro ao salvar a ordem de serviço. Tente novamente.';
+        $tipo_mensagem = 'danger';
     } catch (Exception $e) {
         $pdo->rollBack();
-        $mensagem = 'Erro ao salvar: ' . $e->getMessage();
+        $mensagem = 'Erro inesperado. Tente novamente.';
         $tipo_mensagem = 'danger';
     }
 }
@@ -81,9 +92,13 @@ if (isset($_GET['deletar_os'])) {
         $pdo->commit();
         header("Location: ordens_servico.php?msg=deleted");
         exit;
+    } catch (PDOException $e) {
+        $pdo->rollBack();
+        $mensagem = 'Erro ao excluir a ordem de serviço. Tente novamente.';
+        $tipo_mensagem = 'danger';
     } catch (Exception $e) {
         $pdo->rollBack();
-        $mensagem = 'Erro ao excluir OS: ' . $e->getMessage();
+        $mensagem = 'Erro inesperado. Tente novamente.';
         $tipo_mensagem = 'danger';
     }
 }
@@ -188,7 +203,7 @@ $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <div class="container-fluid">
             <span class="navbar-brand"><i class="bi bi-tools"></i> Oficina360</span>
             <div class="ms-auto">
-                <span class="text-white me-3">Administrador</span>
+                <span class="text-white me-3"><?php echo htmlspecialchars($_SESSION['usuario_nome']); ?></span>
                 <a href="../php/logout.php" class="btn btn-warning btn-sm">Sair</a>
             </div>
         </div>
@@ -293,7 +308,10 @@ $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 </div>
                                 <h6 class="fw-bold mb-1"><?php echo htmlspecialchars($os['cliente_nome']); ?></h6>
                                 <p class="text-muted small mb-3"><?php echo $os['modelo']; ?> - <?php echo $os['placa']; ?></p>
-                                <button class="btn btn-outline-dark btn-sm w-100 fw-bold" onclick="verDetalhes(<?php echo $os['id']; ?>)">VER ANTES / DEPOIS</button>
+                                <div class="d-grid gap-2">
+                                    <button class="btn btn-outline-dark btn-sm fw-bold" onclick="verDetalhes(<?php echo $os['id']; ?>)">VER ANTES / DEPOIS</button>
+                                    <a href="emitir_nota.php?os_id=<?php echo $os['id']; ?>" class="btn btn-success btn-sm fw-bold"><i class="bi bi-file-pdf me-1"></i> EMITIR NOTA</a>
+                                </div>
                             </div>
                         </div>
                     <?php endforeach; ?>
@@ -324,15 +342,19 @@ $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     <?php endforeach; ?>
                                 </select>
                             </div>
-                            <div class="col-md-4">
-                                <label class="form-label fw-bold">Veículo/Modelo:</label>
+                            <div class="col-md-3">
+                                <label class="form-label fw-bold">Marca:</label>
+                                <input type="text" class="form-control" name="marca" id="os_marca" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-bold">Modelo:</label>
                                 <input type="text" class="form-control" name="modelo" id="os_modelo" required>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <label class="form-label fw-bold">Placa:</label>
                                 <input type="text" class="form-control" name="placa" id="os_placa" required>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <label class="form-label fw-bold">Cor:</label>
                                 <input type="text" class="form-control" name="cor" id="os_cor" required>
                             </div>
@@ -438,10 +460,47 @@ $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
         function editarOS(os) {
             document.getElementById('os_id').value = os.id;
             document.getElementById('os_cliente_id').value = os.cliente_id;
+            document.getElementById('os_marca').value = os.marca || '';
             document.getElementById('os_modelo').value = os.modelo;
             document.getElementById('os_placa').value = os.placa;
             document.getElementById('os_cor').value = os.cor;
             document.getElementById('modalTitle').innerText = 'Editar Ordem de Serviço';
+
+            // Carregar itens do orçamento
+            console.log('Buscando itens para OS ID:', os.id);
+            fetch(`get_os_itens.php?os_id=${os.id}`)
+                .then(response => {
+                    console.log('Response status:', response.status);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Dados recebidos:', data);
+                    const container = document.getElementById('orcamento-itens');
+                    container.innerHTML = '';
+
+                    if (data.success && data.itens.length > 0) {
+                        data.itens.forEach(item => {
+                            const div = document.createElement('div');
+                            div.className = 'row g-2 mb-2';
+                            div.innerHTML = `
+                                <div class="col-md-8"><input type="text" class="form-control" name="item_descricao[]" value="${item.descricao}" placeholder="Descrição"></div>
+                                <div class="col-md-3"><input type="number" step="0.01" class="form-control" name="item_valor[]" value="${item.valor}" placeholder="Valor"></div>
+                                <div class="col-md-1"><button type="button" class="btn btn-outline-danger w-100" onclick="this.parentElement.parentElement.remove()"><i class="bi bi-trash"></i></button></div>
+                            `;
+                            container.appendChild(div);
+                        });
+                    } else {
+                        const div = document.createElement('div');
+                        div.className = 'row g-2 mb-2';
+                        div.innerHTML = `
+                            <div class="col-md-8"><input type="text" class="form-control" name="item_descricao[]" placeholder="Descrição"></div>
+                            <div class="col-md-3"><input type="number" step="0.01" class="form-control" name="item_valor[]" placeholder="Valor"></div>
+                            <div class="col-md-1"><button type="button" class="btn btn-outline-danger w-100" onclick="this.parentElement.parentElement.remove()"><i class="bi bi-trash"></i></button></div>
+                        `;
+                        container.appendChild(div);
+                    }
+                })
+                .catch(error => console.error('Erro ao carregar itens:', error));
         }
 
         function abrirModalFinalizar(id) {
