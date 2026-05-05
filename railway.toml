@@ -1,5 +1,6 @@
 [build]
-rootDirectory = "Código"
+builder = "nixpacks"
 
 [deploy]
-startCommand = "php -S 0.0.0.0:$PORT"
+startCommand = "cd Código && php -S 0.0.0.0:$PORT"
+rootDirectory = "Código"
