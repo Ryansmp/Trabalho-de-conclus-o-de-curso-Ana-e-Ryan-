@@ -133,7 +133,6 @@ $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <title>Ordens de Serviço - Oficina360</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
-    <!-- Cache breaker no CSS original -->
     <link rel="stylesheet" href="../css/style.css?v=<?php echo time(); ?>">
     <style>
         /* Forçando a cor absoluta em todo o documento */
@@ -195,6 +194,81 @@ $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
         .modal.show .modal-dialog {
             background: transparent !important;
         }
+
+        /* Responsividade Mobile */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                position: fixed;
+                left: -100%;
+                transition: left 0.3s;
+                z-index: 999;
+                min-height: 100vh;
+            }
+
+            .sidebar.active {
+                left: 0;
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 15px;
+            }
+
+            .col-md-4 {
+                flex: 0 0 100% !important;
+                max-width: 100% !important;
+            }
+
+            .nav-tabs {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+            }
+
+            .nav-tabs .nav-link {
+                white-space: nowrap;
+                font-size: 0.85rem;
+            }
+
+            .os-card {
+                padding: 15px !important;
+            }
+
+            .d-grid {
+                gap: 10px !important;
+            }
+
+            .btn-sm {
+                padding: 0.4rem 0.6rem;
+                font-size: 0.8rem;
+            }
+
+            .modal-dialog {
+                margin: 0.5rem;
+            }
+        }
+
+        .status-badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+        }
+
+        .status-pendente {
+            background-color: #ffc107;
+            color: #000;
+        }
+
+        .status-andamento {
+            background-color: #0d6efd;
+            color: #fff;
+        }
+
+        .status-finalizada {
+            background-color: #198754;
+            color: #fff;
+        }
     </style>
 </head>
 <body>
@@ -202,6 +276,9 @@ $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container-fluid">
             <span class="navbar-brand"><i class="bi bi-tools"></i> Oficina360</span>
+            <button class="navbar-toggler" type="button" id="sidebarToggle">
+                <span class="navbar-toggler-icon"></span>
+            </button>
             <div class="ms-auto">
                 <span class="text-white me-3"><?php echo htmlspecialchars($_SESSION['usuario_nome']); ?></span>
                 <a href="../php/logout.php" class="btn btn-warning btn-sm">Sair</a>
@@ -210,16 +287,18 @@ $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
     </nav>
 
     <!-- Sidebar -->
-    <div class="sidebar">
-        <a href="../index.php" class="nav-link"><i class="bi bi-house"></i> Início</a>
-        <a href="clientes.php" class="nav-link"><i class="bi bi-people"></i> Clientes</a>
-        <a href="ordens_servico.php" class="nav-link active"><i class="bi bi-file-text"></i> Ordens de Serviço</a>
-        <a href="estoque.php" class="nav-link"><i class="bi bi-box"></i> Estoque</a>
-    </div>
+    <nav id="sidebar" class="sidebar">
+        <div class="nav flex-column">
+            <a href="../index.php" class="nav-link"><i class="bi bi-house"></i> Início</a>
+            <a href="clientes.php" class="nav-link"><i class="bi bi-people"></i> Clientes</a>
+            <a href="ordens_servico.php" class="nav-link active"><i class="bi bi-file-text"></i> Ordens de Serviço</a>
+            <a href="estoque.php" class="nav-link"><i class="bi bi-box"></i> Estoque</a>
+        </div>
+    </nav>
 
     <!-- Main Content -->
     <div class="main-content">
-        <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
             <h3 class="fw-bold text-dark"><i class="bi bi-tools me-2"></i> Gestão de Ordens de Serviço</h3>
             <button class="btn btn-primary px-4 fw-bold" style="background-color: #1a237e !important;" data-bs-toggle="modal" data-bs-target="#modalOS" onclick="limparFormulario()">
                 <i class="bi bi-plus-lg me-1"></i> NOVA OS
@@ -248,7 +327,7 @@ $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <?php endif; ?>
                     <?php foreach ($os_pendentes as $os): ?>
                         <div class="col-md-4">
-                            <div class="os-card p-4">
+                            <div class="os-card p-4 bg-white rounded shadow-sm mb-3">
                                 <div class="d-flex justify-content-between mb-3">
                                     <span class="fw-bold" style="color: #1a237e !important;">#<?php echo $os['numero']; ?></span>
                                     <span class="status-badge status-pendente">Pendente</span>
@@ -276,7 +355,7 @@ $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <?php endif; ?>
                     <?php foreach ($os_em_andamento as $os): ?>
                         <div class="col-md-4">
-                            <div class="os-card p-4">
+                            <div class="os-card p-4 bg-white rounded shadow-sm mb-3">
                                 <div class="d-flex justify-content-between mb-3">
                                     <span class="fw-bold" style="color: #1a237e !important;">#<?php echo $os['numero']; ?></span>
                                     <span class="status-badge status-andamento">Em Andamento</span>
@@ -301,7 +380,7 @@ $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <?php endif; ?>
                     <?php foreach ($os_finalizadas as $os): ?>
                         <div class="col-md-4">
-                            <div class="os-card p-4">
+                            <div class="os-card p-4 bg-white rounded shadow-sm mb-3">
                                 <div class="d-flex justify-content-between mb-3">
                                     <span class="fw-bold" style="color: #1a237e !important;">#<?php echo $os['numero']; ?></span>
                                     <span class="status-badge status-finalizada">Finalizada</span>
@@ -434,6 +513,7 @@ $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../js/main.js"></script>
     <script>
         function adicionarItemOrcamento() {
             const container = document.getElementById('orcamento-itens');
