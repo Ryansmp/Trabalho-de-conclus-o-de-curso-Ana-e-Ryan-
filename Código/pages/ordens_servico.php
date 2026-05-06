@@ -200,14 +200,11 @@ $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
             .sidebar {
                 width: 100%;
                 position: fixed;
-                left: -100%;
-                transition: left 0.3s;
-                z-index: 999;
-                min-height: 100vh;
-            }
-
-            .sidebar.active {
                 left: 0;
+                top: 56px;
+                z-index: 999;
+                min-height: calc(100vh - 56px);
+                overflow-y: auto;
             }
 
             .main-content {
@@ -276,9 +273,7 @@ $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container-fluid">
             <span class="navbar-brand"><i class="bi bi-tools"></i> Oficina360</span>
-            <button class="navbar-toggler d-md-none" type="button" id="sidebarToggle">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+
             <div class="ms-auto">
                 <span class="text-white me-3"><?php echo htmlspecialchars($_SESSION['usuario_nome']); ?></span>
                 <a href="../php/logout.php" class="btn btn-warning btn-sm">Sair</a>
