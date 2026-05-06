@@ -94,38 +94,338 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="../css/style.css">
     <style>
-        body { background-color: #f4f7f6 !important; }
-        .navbar { background-color: #001F3F !important; height: 56px; }
-        .sidebar { width: 250px; background-color: #001F3F !important; color: white; position: fixed; left: 0; top: 56px; height: calc(100vh - 56px); z-index: 1000; overflow-y: auto; }
-        .sidebar a { color: white; text-decoration: none; padding: 12px 20px; display: block; transition: 0.3s; border-left: 3px solid transparent; }
-        .sidebar a:hover { background: rgba(255, 215, 0, 0.1); border-left-color: #FFD700; }
-        .main-content { margin-left: 250px; margin-top: 56px; padding: 30px; min-height: calc(100vh - 56px); background: #f4f7f6; }
-        .card { border-radius: 12px; border: none; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        .upload-item { background: #ffffff; padding: 15px; border-radius: 10px; margin-bottom: 12px; border: 2px dashed #e0e0e0; transition: 0.3s; }
-        .upload-item:hover { border-color: #001F3F; background: #f8faff; }
-        .upload-item.drag-over { border-color: #001F3F; background: #e3f2fd; }
-        .media-preview { width: 100%; height: 150px; object-fit: cover; border-radius: 8px; margin-bottom: 8px; cursor: pointer; }
-        .media-container { position: relative; }
-        .media-type-icon { position: absolute; top: 5px; right: 5px; background: rgba(0,0,0,0.7); color: white; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: bold; }
-        .section-title { border-left: 4px solid #001F3F; padding-left: 15px; margin-bottom: 20px; color: #001F3F; font-weight: 700; }
-        .btn-primary { background-color: #001F3F !important; border-color: #001F3F !important; }
-        .btn-primary:hover { background-color: #000d1f !important; border-color: #000d1f !important; }
-        .form-select:focus { border-color: #001F3F !important; box-shadow: 0 0 0 0.2rem rgba(0, 31, 63, 0.25) !important; }
-        .badge { background-color: #001F3F !important; }
+        * {
+            box-sizing: border-box;
+        }
+
+        body { 
+            background-color: #f4f7f6 !important; 
+        }
+
+        .navbar { 
+            background-color: #001F3F !important; 
+            height: 56px; 
+        }
+
+        .sidebar { 
+            width: 250px; 
+            background-color: #001F3F !important; 
+            color: white; 
+            position: fixed; 
+            left: 0; 
+            top: 56px; 
+            height: calc(100vh - 56px); 
+            z-index: 1000; 
+            overflow-y: auto; 
+        }
+
+        .sidebar a { 
+            color: white; 
+            text-decoration: none; 
+            padding: 12px 20px; 
+            display: block; 
+            transition: 0.3s; 
+            border-left: 3px solid transparent; 
+        }
+
+        .sidebar a:hover { 
+            background: rgba(255, 215, 0, 0.1); 
+            border-left-color: #FFD700; 
+        }
+
+        .main-content { 
+            margin-left: 250px; 
+            margin-top: 56px; 
+            padding: 30px; 
+            min-height: calc(100vh - 56px); 
+            background: #f4f7f6; 
+        }
+
+        .card { 
+            border-radius: 12px; 
+            border: none; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
+        }
+
+        .upload-item { 
+            background: #ffffff; 
+            padding: 15px; 
+            border-radius: 10px; 
+            margin-bottom: 12px; 
+            border: 2px dashed #e0e0e0; 
+            transition: 0.3s; 
+        }
+
+        .upload-item:hover { 
+            border-color: #001F3F; 
+            background: #f8faff; 
+        }
+
+        .upload-item.drag-over { 
+            border-color: #001F3F; 
+            background: #e3f2fd; 
+        }
+
+        .media-preview { 
+            width: 100%; 
+            height: 150px; 
+            object-fit: cover; 
+            border-radius: 8px; 
+            margin-bottom: 8px; 
+            cursor: pointer; 
+        }
+
+        .media-container { 
+            position: relative; 
+        }
+
+        .media-type-icon { 
+            position: absolute; 
+            top: 5px; 
+            right: 5px; 
+            background: rgba(0,0,0,0.7); 
+            color: white; 
+            padding: 4px 10px; 
+            border-radius: 4px; 
+            font-size: 11px; 
+            font-weight: bold; 
+        }
+
+        .section-title { 
+            border-left: 4px solid #001F3F; 
+            padding-left: 15px; 
+            margin-bottom: 20px; 
+            color: #001F3F; 
+            font-weight: 700; 
+        }
+
+        .btn-primary { 
+            background-color: #001F3F !important; 
+            border-color: #001F3F !important; 
+        }
+
+        .btn-primary:hover { 
+            background-color: #000d1f !important; 
+            border-color: #000d1f !important; 
+        }
+
+        .form-select:focus { 
+            border-color: #001F3F !important; 
+            box-shadow: 0 0 0 0.2rem rgba(0, 31, 63, 0.25) !important; 
+        }
+
+        .badge { 
+            background-color: #001F3F !important; 
+        }
+
+        /* ===== RESPONSIVIDADE MOBILE ===== */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                position: fixed;
+                left: -100%;
+                top: 56px;
+                transition: left 0.3s;
+                height: calc(100vh - 56px);
+                z-index: 999;
+            }
+
+            .sidebar.active {
+                left: 0;
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 15px;
+                margin-top: 56px;
+            }
+
+            .navbar-toggler {
+                display: block !important;
+            }
+
+            /* Ajusta os campos de formulário */
+            .row.g-3 {
+                gap: 0.75rem !important;
+            }
+
+            .col-md-6,
+            .col-md-3 {
+                flex: 0 0 100% !important;
+                max-width: 100% !important;
+            }
+
+            /* Media preview em grid responsivo */
+            .col-md-2 {
+                flex: 0 0 50% !important;
+                max-width: 50% !important;
+            }
+
+            .col-sm-4 {
+                flex: 0 0 50% !important;
+                max-width: 50% !important;
+            }
+
+            .col-6 {
+                flex: 0 0 100% !important;
+                max-width: 100% !important;
+            }
+
+            /* Upload items responsivos */
+            .upload-item {
+                padding: 12px;
+                margin-bottom: 10px;
+            }
+
+            .upload-item .row {
+                flex-direction: column;
+            }
+
+            .upload-item .col-auto {
+                width: 100% !important;
+                padding-top: 10px !important;
+            }
+
+            .upload-item .col-auto button {
+                width: 100%;
+            }
+
+            /* Botões responsivos */
+            .card-footer {
+                flex-direction: column !important;
+                gap: 10px !important;
+            }
+
+            .card-footer .btn {
+                width: 100%;
+            }
+
+            /* Reduz padding em cards */
+            .card-body {
+                padding: 15px !important;
+            }
+
+            .card-footer {
+                padding: 15px !important;
+            }
+
+            /* Labels e inputs menores */
+            .form-label {
+                font-size: 0.9rem;
+            }
+
+            .form-control,
+            .form-select {
+                font-size: 1rem;
+                padding: 0.5rem 0.75rem;
+            }
+
+            /* Texto menor em seções */
+            .section-title {
+                font-size: 1.1rem;
+                margin-bottom: 15px;
+            }
+
+            /* Badge responsivo */
+            .badge {
+                font-size: 0.8rem;
+                padding: 0.4rem 0.6rem !important;
+            }
+
+            /* Heading responsivo */
+            h5 {
+                font-size: 1rem !important;
+            }
+
+            .text-muted.small {
+                font-size: 0.75rem;
+            }
+
+            /* Espaçamento reduzido */
+            .mb-4 {
+                margin-bottom: 1rem !important;
+            }
+
+            .p-4 {
+                padding: 1rem !important;
+            }
+
+            /* Media container responsivo */
+            .media-preview {
+                height: 120px;
+            }
+
+            /* Ajusta o header do card */
+            .card-header {
+                flex-direction: column;
+                align-items: flex-start !important;
+            }
+
+            .card-header .d-flex {
+                flex-direction: column;
+                width: 100%;
+                gap: 10px;
+            }
+
+            .card-header h5 {
+                width: 100%;
+            }
+
+            .card-header .badge {
+                width: 100%;
+                text-align: left;
+            }
+        }
+
+        /* Ajustes para telas muito pequenas */
+        @media (max-width: 480px) {
+            .main-content {
+                padding: 10px;
+            }
+
+            .card-body {
+                padding: 10px !important;
+            }
+
+            .upload-item {
+                padding: 10px;
+            }
+
+            .form-control,
+            .form-select {
+                font-size: 16px; /* Evita zoom automático no iOS */
+            }
+
+            .col-md-2 {
+                flex: 0 0 100% !important;
+                max-width: 100% !important;
+            }
+
+            .media-preview {
+                height: 100px;
+            }
+
+            .section-title {
+                font-size: 1rem;
+            }
+        }
     </style>
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container-fluid">
             <span class="navbar-brand"><i class="bi bi-tools"></i> Oficina360</span>
+            <button class="navbar-toggler" type="button" id="sidebarToggle">
+                <span class="navbar-toggler-icon"></span>
+            </button>
             <div class="ms-auto">
-                <span class="text-white me-3"><?php echo htmlspecialchars($_SESSION['usuario_nome']); ?></span>
+                <span class="text-white me-3">Administrador</span>
                 <a href="../php/logout.php" class="btn btn-warning btn-sm">Sair</a>
             </div>
         </div>
     </nav>
 
-    <div class="sidebar">
+    <div id="sidebar" class="sidebar">
         <a href="../index.php" class="nav-link"><i class="bi bi-house"></i> Início</a>
         <a href="clientes.php" class="nav-link"><i class="bi bi-people"></i> Clientes</a>
         <a href="ordens_servico.php" class="nav-link"><i class="bi bi-file-text"></i> Ordens de Serviço</a>
@@ -136,7 +436,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="container-fluid">
             <div class="card">
                 <div class="card-header bg-white py-3 border-bottom">
-                    <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                         <h5 class="mb-0 text-primary fw-bold"><i class="bi bi-check2-square me-2"></i> Checklist de Entrada - OS #<?php echo $os['numero']; ?></h5>
                         <span class="badge bg-primary-subtle text-primary px-3 py-2">Cliente: <?php echo htmlspecialchars($os['cliente_nome']); ?></span>
                     </div>
@@ -166,7 +466,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     </div>
                                 </div>
                             </div>
-                            <button type="button" class="btn btn-primary btn-sm fw-bold mt-3" onclick="adicionarCampoUpload()">
+                            <button type="button" class="btn btn-primary btn-sm fw-bold mt-3 w-100" onclick="adicionarCampoUpload()">
                                 <i class="bi bi-plus-circle me-1"></i> ADICIONAR MAIS UMA FOTO/VÍDEO
                             </button>
 
@@ -254,7 +554,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
         </div>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../js/main.js"></script>
     <script>
+        // Toggle sidebar no mobile
+        document.getElementById('sidebarToggle').addEventListener('click', function() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('active');
+        });
+
+        // Fechar sidebar ao clicar em um link
+        document.querySelectorAll('#sidebar a').forEach(link => {
+            link.addEventListener('click', function() {
+                const sidebar = document.getElementById('sidebar');
+                sidebar.classList.remove('active');
+            });
+        });
+
         function adicionarCampoUpload() {
             const container = document.getElementById('container-uploads');
             const div = document.createElement('div');
@@ -312,6 +629,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 label.innerHTML = `<i class="bi bi-check-circle-fill text-success"></i> <strong>${fileName}</strong> (${fileSize}MB)`;
             }
         }
+
         document.getElementById('formChecklist').addEventListener('submit', function() {
             const btn = document.getElementById('btnSalvar');
             btn.disabled = true;
