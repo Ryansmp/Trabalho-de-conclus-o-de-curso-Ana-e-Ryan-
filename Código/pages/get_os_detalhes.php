@@ -48,9 +48,9 @@ $total = 0;
                     <?php foreach ($midias as $m): ?>
                         <div class="col-4">
                             <?php if ($m['tipo'] === 'video'): ?>
-                                <video src="../<?php echo $m['arquivo_url']; ?>" style="width:100%; height:80px; object-fit:cover; border-radius:5px;" controls></video>
+                                <video src="<?php echo $m['arquivo_url']; ?>" style="width:100%; height:80px; object-fit:cover; border-radius:5px;" controls></video>
                             <?php else: ?>
-                                <img src="../<?php echo $m['arquivo_url']; ?>" style="width:100%; height:80px; object-fit:cover; border-radius:5px; cursor:pointer;" onclick="window.open(this.src)">
+                                <img src="<?php echo $m['arquivo_url']; ?>" style="width:100%; height:80px; object-fit:cover; border-radius:5px; cursor:pointer;" onclick="window.open(this.src)">
                             <?php endif; ?>
                         </div>
                     <?php endforeach; ?>
@@ -76,7 +76,7 @@ $total = 0;
         <div class="mb-3">
             <label class="small fw-bold text-muted d-block mb-2">FOTO DE CONCLUSÃO:</label>
             <?php if ($os['imagem_final_url']): ?>
-                <img src="../<?php echo $os['imagem_final_url']; ?>" style="width:100%; height:180px; object-fit:cover; border-radius:8px; border: 2px solid #198754;" onclick="window.open(this.src)">
+                <img src="<?php echo $os['imagem_final_url']; ?>" style="width:100%; height:180px; object-fit:cover; border-radius:8px; border: 2px solid #198754;" onclick="window.open(this.src)">
             <?php else: ?>
                 <div class="p-4 bg-light text-center text-muted rounded border small">Foto final não disponível.</div>
             <?php endif; ?>
