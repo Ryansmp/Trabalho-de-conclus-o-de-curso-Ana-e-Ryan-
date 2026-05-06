@@ -116,11 +116,74 @@ function formatarDocumento($documento) {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="../css/style.css">
+    <style>
+        /* Responsividade Mobile */
+        .cliente-card {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-left: 4px solid #001F3F;
+        }
+
+        .cliente-card h6 {
+            color: #001F3F;
+            font-weight: bold;
+            margin-top: 10px;
+            margin-bottom: 5px;
+        }
+
+        .cliente-card p {
+            margin: 0;
+            font-size: 0.95rem;
+            color: #666;
+        }
+
+        .cliente-card .info-label {
+            font-weight: 600;
+            color: #333;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .table-responsive {
+                display: none !important;
+            }
+            
+            .clientes-list {
+                display: block !important;
+            }
+
+            .modal-dialog {
+                margin: 0.5rem;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .clientes-list {
+                display: none !important;
+            }
+        }
+
+        .btn-actions {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+
+        .form-label span.text-danger {
+            color: #dc3545;
+        }
+    </style>
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container-fluid">
             <span class="navbar-brand"><i class="bi bi-tools"></i> Oficina360</span>
+            <button class="navbar-toggler" type="button" id="sidebarToggle">
+                <span class="navbar-toggler-icon"></span>
+            </button>
             <div class="ms-auto">
                 <span class="text-white me-3"><?php echo htmlspecialchars($_SESSION['usuario_nome']); ?></span>
                 <a href="../php/logout.php" class="btn btn-warning btn-sm">Sair</a>
@@ -129,15 +192,16 @@ function formatarDocumento($documento) {
     </nav>
 
     <div class="d-flex">
-        <div class="sidebar">
-            <a href="../index.php" class="nav-link"><i class="bi bi-house"></i> Início</a>
-            <a href="clientes.php" class="nav-link active"><i class="bi bi-people"></i> Clientes</a>
-            <a href="ordens_servico.php" class="nav-link"><i class="bi bi-file-text"></i> Ordens de Serviço</a>
+        <nav id="sidebar" class="sidebar">
+            <div class="nav flex-column">
+                <a href="../index.php" class="nav-link"><i class="bi bi-house"></i> Início</a>
+                <a href="clientes.php" class="nav-link active"><i class="bi bi-people"></i> Clientes</a>
+                <a href="ordens_servico.php" class="nav-link"><i class="bi bi-file-text"></i> Ordens de Serviço</a>
+                <a href="estoque.php" class="nav-link"><i class="bi bi-box"></i> Estoque</a>
+            </div>
+        </nav>
 
-            <a href="estoque.php" class="nav-link"><i class="bi bi-box"></i> Estoque</a>
-        </div>
-
-        <div class="main-content">
+        <div class="main-content w-100">
             <div class="container-fluid">
                 <?php if ($eh_mecanico): ?>
                     <div class="alert alert-warning alert-dismissible fade show" role="alert">
@@ -146,8 +210,8 @@ function formatarDocumento($documento) {
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
                     <div class="row">
-                        <div class="col-md-6">
-                            <a href="ordens_servico.php" class="btn btn-primary btn-lg">
+                        <div class="col-12">
+                            <a href="ordens_servico.php" class="btn btn-primary">
                                 <i class="bi bi-arrow-right"></i> Ir para Ordens de Serviço
                             </a>
                         </div>
@@ -163,7 +227,7 @@ function formatarDocumento($documento) {
                 <?php endif; ?>
 
                 <div class="card mb-4">
-                    <div class="card-header d-flex justify-content-between align-items-center">
+                    <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
                         <span><i class="bi bi-list"></i> Total de Clientes: <strong><?php echo $total_clientes; ?></strong></span>
                         <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalCliente" onclick="limparFormulario()">
                             <i class="bi bi-plus"></i> Novo Cliente
@@ -173,7 +237,9 @@ function formatarDocumento($documento) {
                         <div class="mb-3">
                             <input type="text" class="form-control" id="buscaCliente" placeholder="🔍 Buscar por nome, CPF/CNPJ ou telefone...">
                         </div>
+                        
                         <?php if (count($clientes) > 0): ?>
+                            <!-- Tabela para desktop -->
                             <div class="table-responsive">
                                 <table class="table table-hover">
                                     <thead>
@@ -201,6 +267,22 @@ function formatarDocumento($documento) {
                                     </tbody>
                                 </table>
                             </div>
+
+                            <!-- Cards para mobile -->
+                            <div class="clientes-list">
+                                <?php foreach ($clientes as $cliente): ?>
+                                    <div class="cliente-card linha-cliente" data-nome="<?php echo strtolower($cliente['nome']); ?>" data-cpf="<?php echo strtolower($cliente['cpf_cnpj']); ?>" data-telefone="<?php echo strtolower($cliente['telefone']); ?>">
+                                        <h6><?php echo htmlspecialchars($cliente['nome']); ?></h6>
+                                        <p><span class="info-label">CPF/CNPJ:</span> <?php echo htmlspecialchars(formatarDocumento($cliente['cpf_cnpj'])); ?></p>
+                                        <p><span class="info-label">Telefone:</span> <?php echo htmlspecialchars(formatarTelefone($cliente['telefone'])); ?></p>
+                                        <p><span class="info-label">Email:</span> <?php echo htmlspecialchars($cliente['email']); ?></p>
+                                        <div class="btn-actions mt-3">
+                                            <button class="btn btn-warning btn-sm flex-grow-1" onclick="editarCliente(<?php echo $cliente['id']; ?>, '<?php echo htmlspecialchars($cliente['nome']); ?>', '<?php echo htmlspecialchars($cliente['cpf_cnpj']); ?>', '<?php echo htmlspecialchars($cliente['telefone']); ?>', '<?php echo htmlspecialchars($cliente['email']); ?>', '<?php echo htmlspecialchars($cliente['endereco']); ?>')"><i class="bi bi-pencil"></i> Editar</button>
+                                            <a href="?deletar=<?php echo $cliente['id']; ?>" class="btn btn-danger btn-sm flex-grow-1" onclick="return confirm('Tem certeza?')"><i class="bi bi-trash"></i> Deletar</a>
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
                         <?php else: ?>
                             <div class="alert alert-info">
                                 <i class="bi bi-info-circle"></i> Nenhum cliente cadastrado. <a href="#" data-bs-toggle="modal" data-bs-target="#modalCliente" onclick="limparFormulario()">Cadastre um novo cliente</a>
@@ -212,6 +294,7 @@ function formatarDocumento($documento) {
         </div>
     </div>
 
+    <!-- Modal -->
     <div class="modal fade" id="modalCliente" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -222,7 +305,6 @@ function formatarDocumento($documento) {
                 <form method="POST">
                     <div class="modal-body">
                         <input type="hidden" id="id" name="id" value="">
-
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="nome" class="form-label">Nome <span class="text-danger">*</span></label>
@@ -305,7 +387,7 @@ function formatarDocumento($documento) {
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="../js/masks.js"></script>
+    <script src="../js/main.js"></script>
     <script>
         const tipoCpfRadio = document.getElementById('tipo_cpf');
         const tipoCnpjRadio = document.getElementById('tipo_cnpj');
