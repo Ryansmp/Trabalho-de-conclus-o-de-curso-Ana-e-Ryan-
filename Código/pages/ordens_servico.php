@@ -276,7 +276,7 @@ $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container-fluid">
             <span class="navbar-brand"><i class="bi bi-tools"></i> Oficina360</span>
-            <button class="navbar-toggler" type="button" id="sidebarToggle">
+            <button class="navbar-toggler d-md-none" type="button" id="sidebarToggle">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="ms-auto">
