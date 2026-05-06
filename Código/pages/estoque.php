@@ -80,9 +80,7 @@ if (isset($_GET['edit'])) {
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container-fluid">
             <a class="navbar-brand" href="../index.php">🔧 Oficina360</a>
-            <button class="navbar-toggler" type="button" id="sidebarToggle">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+
             <div class="ms-auto">
                 <span class="text-white me-3"><?php echo $_SESSION['usuario_nome']; ?></span>
                 <a href="../php/logout.php" class="btn btn-sm btn-warning">Sair</a>
