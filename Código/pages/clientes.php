@@ -321,7 +321,7 @@ function formatarDocumento($documento) {
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="nome" class="form-label">Nome <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="nome" name="nome" placeholder="João Silva" required>
+                                <input type="text" class="form-control" id="nome" name="nome" placeholder="João Silva" maxlength="100" required>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Tipo de Documento <span class="text-danger">*</span></label>
@@ -337,7 +337,7 @@ function formatarDocumento($documento) {
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="doc_input" class="form-label" id="doc_label">CPF <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="doc_input" name="cpf_cnpj" placeholder="000.000.000-00" maxlength="14" inputmode="numeric" required>
+                                <input type="text" class="form-control" id="doc_input" name="cpf_cnpj" placeholder="000.000.000-00" maxlength="14" inputmode="numeric" pattern="[0-9]*" required>
                                 <small class="text-muted" id="doc_hint">11 dígitos</small>
                             </div>
                         </div>
@@ -501,10 +501,13 @@ function formatarDocumento($documento) {
 
                 const cidadeEstado = partes[2].split(', ');
                 document.getElementById('cidade').value = cidadeEstado[0] || '';
+                document.getElementById('estado').value = cidadeEstado[1] || '';
 
-                const estadoCep = partes[3].split(': ');
-                document.getElementById('estado').value = estadoCep[0] || '';
-                document.getElementById('cep').value = estadoCep[1] || '';
+                // Extrair CEP usando regex para maior robustez
+                const cepMatch = endereco.match(/CEP:\s*(\d+)/);
+                if (cepMatch) {
+                    document.getElementById('cep').value = cepMatch[1];
+                }
             }
 
             const modal = new bootstrap.Modal(document.getElementById('modalCliente'));
