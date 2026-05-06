@@ -161,9 +161,11 @@ if (isset($_GET['gerar_pdf'])) {
     $pdf->SetXY(160, $y_pos + 5);
     $pdf->Cell(0, 5, 'R$ ' . number_format($total, 2, ',', '.'), 0, 1);
 
+    // ✅ CORRIGIDO: Usar a forma de pagamento do banco de dados
     $pdf->SetFont('Arial', '', 9);
     $pdf->SetXY(10, $y_pos + 15);
-    $pdf->Cell(190, 5, 'Forma de Pagamento: Pix', 0, 1, 'C');
+    $forma_pagamento = htmlspecialchars($ordem['forma_pagamento'] ?? 'Não informado');
+    $pdf->Cell(190, 5, 'Forma de Pagamento: ' . $forma_pagamento, 0, 1, 'C');
 
     $pdf->SetFont('Arial', 'B', 9);
     $pdf->SetXY(10, $y_pos + 23);
@@ -305,6 +307,28 @@ if (isset($_GET['gerar_pdf'])) {
             display: inline-block;
             margin-bottom: 20px;
         }
+
+        /* Responsividade Mobile */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .info-row {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .items-table th,
+            .items-table td {
+                padding: 8px;
+                font-size: 0.9em;
+            }
+
+            .btn-emitir {
+                padding: 10px 20px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -344,8 +368,8 @@ if (isset($_GET['gerar_pdf'])) {
             <h3 style="color: #667eea; margin-bottom: 15px;">Dados do Veículo</h3>
             <div class="info-row">
                 <div class="info-item">
-                    <label>Marca</label>
-                    <span><?php echo htmlspecialchars($ordem['marca'] ?? 'N/A'); ?></span>
+                    <label>Placa</label>
+                    <span><?php echo htmlspecialchars($ordem['placa'] ?? 'N/A'); ?></span>
                 </div>
                 <div class="info-item">
                     <label>Modelo</label>
@@ -354,8 +378,8 @@ if (isset($_GET['gerar_pdf'])) {
             </div>
             <div class="info-row">
                 <div class="info-item">
-                    <label>Placa</label>
-                    <span><?php echo htmlspecialchars($ordem['placa'] ?? 'N/A'); ?></span>
+                    <label>Marca</label>
+                    <span><?php echo htmlspecialchars($ordem['marca'] ?? 'N/A'); ?></span>
                 </div>
                 <div class="info-item">
                     <label>Cor</label>
@@ -365,46 +389,51 @@ if (isset($_GET['gerar_pdf'])) {
         </div>
 
         <div class="info-section">
-            <h3 style="color: #667eea; margin-bottom: 15px;">Itens de Serviço</h3>
+            <h3 style="color: #667eea; margin-bottom: 15px;">Detalhamento do Serviço</h3>
             <table class="items-table">
                 <thead>
                     <tr>
                         <th>Descrição</th>
-                        <th style="text-align: center; width: 80px;">QTD</th>
-                        <th style="text-align: right; width: 120px;">R$ UNIT.</th>
-                        <th style="text-align: right; width: 120px;">R$ TOTAL</th>
+                        <th class="text-end">Valor</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php
                     $total = 0;
-                    foreach ($itens as $item):
-                        $quantidade = $item['quantidade'] ?? 1;
-                        $valor_unitario = $item['valor'] ?? 0;
-                        $valor_total = $quantidade * $valor_unitario;
-                        $total += $valor_total;
+                    foreach ($itens as $item) {
+                        $total += $item['valor'];
                     ?>
-                    <tr>
-                        <td><?php echo htmlspecialchars($item['descricao']); ?></td>
-                        <td style="text-align: center;"><?php echo $quantidade; ?></td>
-                        <td style="text-align: right;">R$ <?php echo number_format($valor_unitario, 2, ',', '.'); ?></td>
-                        <td style="text-align: right;">R$ <?php echo number_format($valor_total, 2, ',', '.'); ?></td>
-                    </tr>
-                    <?php endforeach; ?>
+                        <tr>
+                            <td><?php echo htmlspecialchars($item['descricao'] ?? ''); ?></td>
+                            <td class="text-end">R$ <?php echo number_format($item['valor'], 2, ',', '.'); ?></td>
+                        </tr>
+                    <?php } ?>
                 </tbody>
             </table>
 
             <div class="total-section">
-                <p style="font-size: 1.1em; margin-bottom: 10px;">VALOR TOTAL</p>
-                <p class="total-value">R$ <?php echo number_format($total, 2, ',', '.'); ?></p>
+                <p>Valor Total: <span class="total-value">R$ <?php echo number_format($total, 2, ',', '.'); ?></span></p>
+            </div>
+        </div>
+
+        <div class="info-section">
+            <h3 style="color: #667eea; margin-bottom: 15px;">Informações de Pagamento</h3>
+            <div class="info-row">
+                <div class="info-item">
+                    <label>Forma de Pagamento</label>
+                    <!-- ✅ CORRIGIDO: Exibir a forma de pagamento do banco de dados -->
+                    <span><strong><?php echo htmlspecialchars($ordem['forma_pagamento'] ?? 'Não informado'); ?></strong></span>
+                </div>
+                <div class="info-item">
+                    <label>Data de Conclusão</label>
+                    <span><?php echo date('d/m/Y H:i', strtotime($ordem['data_finalizacao'] ?? date('Y-m-d H:i:s'))); ?></span>
+                </div>
             </div>
         </div>
 
         <a href="?os_id=<?php echo $os_id; ?>&gerar_pdf=1" class="btn-emitir">
-            📥 Gerar e Baixar PDF
+            📥 GERAR E BAIXAR PDF
         </a>
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
