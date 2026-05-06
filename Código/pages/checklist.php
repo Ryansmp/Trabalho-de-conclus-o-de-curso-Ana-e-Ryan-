@@ -223,15 +223,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             .sidebar {
                 width: 100%;
                 position: fixed;
-                left: -100%;
+                left: 0;
                 top: 56px;
-                transition: left 0.3s;
                 height: calc(100vh - 56px);
                 z-index: 999;
-            }
-
-            .sidebar.active {
-                left: 0;
             }
 
             .main-content {
@@ -415,9 +410,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container-fluid">
             <span class="navbar-brand"><i class="bi bi-tools"></i> Oficina360</span>
-            <button class="navbar-toggler d-md-none" type="button" id="sidebarToggle">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+
             <div class="ms-auto">
                 <span class="text-white me-3">Administrador</span>
                 <a href="../php/logout.php" class="btn btn-warning btn-sm">Sair</a>
@@ -558,19 +551,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="../js/main.js"></script>
     <script>
-        // Toggle sidebar no mobile
-        document.getElementById('sidebarToggle').addEventListener('click', function() {
-            const sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('active');
-        });
 
-        // Fechar sidebar ao clicar em um link
-        document.querySelectorAll('#sidebar a').forEach(link => {
-            link.addEventListener('click', function() {
-                const sidebar = document.getElementById('sidebar');
-                sidebar.classList.remove('active');
-            });
-        });
 
         function adicionarCampoUpload() {
             const container = document.getElementById('container-uploads');
