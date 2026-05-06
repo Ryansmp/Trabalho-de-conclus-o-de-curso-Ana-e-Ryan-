@@ -34,9 +34,7 @@ function link_mecanico($url) {
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container-fluid">
             <span class="navbar-brand"><i class="bi bi-tools"></i> Oficina360</span>
-            <button class="navbar-toggler" type="button" id="sidebarToggle">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+
             <div class="ms-auto">
                 <span class="text-white me-3">
                     <?php echo htmlspecialchars($_SESSION['usuario_nome']); ?>
