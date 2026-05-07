@@ -514,7 +514,77 @@ function formatarDocumento($documento) {
             modal.show();
         }
 
+        function validarFormulario() {
+            const nome = document.getElementById('nome').value.trim();
+            const cep = document.getElementById('cep').value.trim();
+            const numero = document.getElementById('numero').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const docInput = document.getElementById('doc_input').value.trim();
+            const telefone = document.getElementById('telefone').value.trim();
+            const rua = document.getElementById('rua').value.trim();
+            const bairro = document.getElementById('bairro').value.trim();
+            const cidade = document.getElementById('cidade').value.trim();
+            const estado = document.getElementById('estado').value.trim();
+
+            if (!nome || !/^[a-zA-ZÀ-ÿ\s]+$/.test(nome)) {
+                alert('Nome é obrigatório e deve conter apenas letras e espaços');
+                return false;
+            }
+
+            if (!docInput || !/^\d+$/.test(docInput)) {
+                alert('CPF/CNPJ é obrigatório e deve conter apenas números');
+                return false;
+            }
+
+            if (telefone && !/^\d+$/.test(telefone.replace(/[\s()\-]/g, ''))) {
+                alert('Telefone deve conter apenas números');
+                return false;
+            }
+
+            if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                alert('Email inválido');
+                return false;
+            }
+
+            if (!cep || !/^\d{5}-?\d{3}$/.test(cep)) {
+                alert('CEP é obrigatório e deve conter apenas números (formato: 00000-000)');
+                return false;
+            }
+
+            if (!rua) {
+                alert('Rua é obrigatória');
+                return false;
+            }
+
+            if (!numero || !/^[0-9a-zA-Z]+$/.test(numero)) {
+                alert('Número é obrigatório e deve conter apenas números e letras');
+                return false;
+            }
+
+            if (!bairro) {
+                alert('Bairro é obrigatório');
+                return false;
+            }
+
+            if (!cidade) {
+                alert('Cidade é obrigatória');
+                return false;
+            }
+
+            if (!estado) {
+                alert('Estado é obrigatório');
+                return false;
+            }
+
+            return true;
+        }
+
         document.querySelector('form').addEventListener('submit', function(e) {
+            if (!validarFormulario()) {
+                e.preventDefault();
+                return false;
+            }
+
             const docInput = document.getElementById('doc_input');
             const telefoneInput = document.getElementById('telefone');
             const cepInput = document.getElementById('cep');
