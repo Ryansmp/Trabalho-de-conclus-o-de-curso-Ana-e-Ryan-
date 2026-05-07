@@ -321,7 +321,7 @@ function formatarDocumento($documento) {
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="nome" class="form-label">Nome <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="nome" name="nome" placeholder="João Silva" maxlength="100" required>
+                                <input type="text" class="form-control" id="nome" name="nome" placeholder="João Silva" maxlength="100" pattern="[a-zA-ZÀ-ÿ\s]+" title="Apenas letras e espaços" required>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Tipo de Documento <span class="text-danger">*</span></label>
@@ -345,7 +345,7 @@ function formatarDocumento($documento) {
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="telefone" class="form-label">Telefone</label>
-                                <input type="text" class="form-control" id="telefone" name="telefone" placeholder="(11) 99999-9999" maxlength="15" inputmode="numeric">
+                                <input type="text" class="form-control" id="telefone" name="telefone" placeholder="(11) 98765-4321" pattern="[0-9\s()\-]+" title="Apenas números" inputmode="tel" required>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label for="email" class="form-label">Email</label>
@@ -371,7 +371,7 @@ function formatarDocumento($documento) {
                         <div class="row">
                             <div class="col-md-4 mb-3">
                                 <label for="numero" class="form-label">Número <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="numero" name="numero" placeholder="123" required>
+                                <input type="text" class="form-control" id="numero" name="numero" placeholder="123A" pattern="[0-9a-zA-Z]+" title="Números e letras" required>
                             </div>
                             <div class="col-md-4 mb-3">
                                 <label for="bairro" class="form-label">Bairro <span class="text-danger">*</span></label>
