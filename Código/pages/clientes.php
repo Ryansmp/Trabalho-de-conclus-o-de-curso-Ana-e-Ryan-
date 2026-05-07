@@ -345,7 +345,7 @@ function formatarDocumento($documento) {
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="telefone" class="form-label">Telefone</label>
-                                <input type="text" class="form-control" id="telefone" name="telefone" placeholder="(11) 98765-4321" pattern="[0-9\s()\-]+" title="Apenas números" inputmode="tel" required>
+                                <input type="text" class="form-control" id="telefone" name="telefone" placeholder="(11) 98765-4321" pattern="[0-9\s()\-]+" title="Apenas números" inputmode="tel" maxlength="15" required>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label for="email" class="form-label">Email</label>
@@ -592,6 +592,44 @@ function formatarDocumento($documento) {
             docInput.value = docInput.value.replace(/\D/g, '');
             telefoneInput.value = telefoneInput.value.replace(/\D/g, '');
             cepInput.value = cepInput.value.replace(/\D/g, '');
+        });
+
+        // Validação em tempo real do Telefone
+        document.getElementById('telefone').addEventListener('input', function(e) {
+            let valor = this.value.replace(/[^0-9()\-\s]/g, '');
+            this.value = valor;
+            
+            if (valor.length > 15) {
+                this.value = valor.substring(0, 15);
+            }
+        });
+
+        // Validação em tempo real do Nome
+        document.getElementById('nome').addEventListener('input', function(e) {
+            let valor = this.value.replace(/[^a-zA-ZÀ-ÿ\s]/g, '');
+            this.value = valor;
+        });
+
+        // Validação em tempo real do Número
+        document.getElementById('numero').addEventListener('input', function(e) {
+            let valor = this.value.replace(/[^0-9a-zA-Z]/g, '');
+            this.value = valor;
+        });
+
+        // Validação em tempo real do CEP
+        document.getElementById('cep').addEventListener('input', function(e) {
+            let valor = this.value.replace(/[^0-9\-]/g, '');
+            this.value = valor;
+            
+            if (valor.length > 9) {
+                this.value = valor.substring(0, 9);
+            }
+        });
+
+        // Validação em tempo real do CPF/CNPJ
+        document.getElementById('doc_input').addEventListener('input', function(e) {
+            let valor = this.value.replace(/[^0-9]/g, '');
+            this.value = valor;
         });
 
         document.getElementById('buscaCliente').addEventListener('keyup', function() {
