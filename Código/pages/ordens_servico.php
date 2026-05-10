@@ -114,12 +114,31 @@ $todas_os = $stmt->fetchAll(PDO::FETCH_ASSOC);
 $os_pendentes = [];
 $os_em_andamento = [];
 $os_finalizadas = [];
+$os_por_mes = []; // Novo: organizar por mês
 
 foreach ($todas_os as $os) {
     $status = strtolower(trim($os['status'] ?? ''));
     if ($status === 'em_andamento') { $os_em_andamento[] = $os; }
-    elseif ($status === 'finalizada') { $os_finalizadas[] = $os; }
+    elseif ($status === 'finalizada') { 
+        $os_finalizadas[] = $os;
+        // Organizar finalizadas por mês
+        $mes_ano = date('Y-m', strtotime($os['data_finalizacao']));
+        if (!isset($os_por_mes[$mes_ano])) {
+            $os_por_mes[$mes_ano] = [];
+        }
+        $os_por_mes[$mes_ano][] = $os;
+    }
     else { $os_pendentes[] = $os; }
+}
+
+// Ordenar meses em ordem decrescente
+krsort($os_por_mes);
+
+// Obter mês selecionado do GET
+$mes_selecionado = $_GET['mes'] ?? null;
+$os_historico = [];
+if ($mes_selecionado && isset($os_por_mes[$mes_selecionado])) {
+    $os_historico = $os_por_mes[$mes_selecionado];
 }
 
 $stmt = $pdo->query("SELECT id, nome FROM clientes ORDER BY nome");
@@ -227,6 +246,35 @@ $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 font-size: 0.85rem;
             }
 
+            /* Responsividade para seleção de meses */
+            .row.g-2 {
+                gap: 0.5rem !important;
+            }
+
+            .row.g-2 .col-6 {
+                flex: 0 0 50% !important;
+                max-width: 50% !important;
+            }
+
+            .row.g-2 .col-md-3 {
+                flex: 0 0 50% !important;
+                max-width: 50% !important;
+            }
+
+            .row.g-2 .col-lg-2 {
+                flex: 0 0 50% !important;
+                max-width: 50% !important;
+            }
+
+            .btn {
+                padding: 0.4rem 0.5rem !important;
+                font-size: 0.75rem !important;
+            }
+
+            .btn small {
+                font-size: 0.65rem !important;
+            }
+
             .os-card {
                 padding: 15px !important;
             }
@@ -242,6 +290,33 @@ $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             .modal-dialog {
                 margin: 0.5rem;
+            }
+        }
+
+        /* Responsividade Extra Pequena */
+        @media (max-width: 480px) {
+            .row.g-2 .col-6,
+            .row.g-2 .col-md-3,
+            .row.g-2 .col-lg-2 {
+                flex: 0 0 100% !important;
+                max-width: 100% !important;
+            }
+
+            .btn {
+                padding: 0.35rem 0.4rem !important;
+                font-size: 0.7rem !important;
+            }
+
+            .btn small {
+                font-size: 0.6rem !important;
+            }
+
+            .p-4 {
+                padding: 1rem !important;
+            }
+
+            h6 {
+                font-size: 0.9rem !important;
             }
         }
 
@@ -311,6 +386,7 @@ $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#pendente">Aguardando Checklist <span class="badge bg-warning text-dark ms-2"><?php echo count($os_pendentes); ?></span></button></li>
             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#andamento">Em Andamento <span class="badge bg-primary ms-2"><?php echo count($os_em_andamento); ?></span></button></li>
             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#finalizada">Finalizadas <span class="badge bg-success ms-2"><?php echo count($os_finalizadas); ?></span></button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#historico">Histórico <span class="badge bg-info ms-2"><?php echo count($os_finalizadas); ?></span></button></li>
         </ul>
 
         <div class="tab-content">
@@ -389,6 +465,73 @@ $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             </div>
                         </div>
                     <?php endforeach; ?>
+                </div>
+            </div>
+
+            <!-- ABA HISTÓRICO -->
+            <div class="tab-pane fade" id="historico">
+                <!-- Seleção de Meses -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="p-4 bg-white rounded shadow-sm">
+                            <h6 class="fw-bold mb-3" style="color: #1a237e !important;">Selecione um Mês:</h6>
+                            <div class="row g-2">
+                                <?php 
+                                $meses_nomes = [
+                                    '01' => 'Janeiro', '02' => 'Fevereiro', '03' => 'Março', '04' => 'Abril',
+                                    '05' => 'Maio', '06' => 'Junho', '07' => 'Julho', '08' => 'Agosto',
+                                    '09' => 'Setembro', '10' => 'Outubro', '11' => 'Novembro', '12' => 'Dezembro'
+                                ];
+                                $ano_atual = date('Y');
+                                
+                                // Mostrar últimos 12 meses
+                                for ($i = 0; $i < 12; $i++) {
+                                    $timestamp = strtotime("-$i months");
+                                    $mes_ano = date('Y-m', $timestamp);
+                                    $mes_num = date('m', $timestamp);
+                                    $ano = date('Y', $timestamp);
+                                    $mes_nome = $meses_nomes[$mes_num];
+                                    $tem_os = isset($os_por_mes[$mes_ano]) ? count($os_por_mes[$mes_ano]) : 0;
+                                    $ativo = ($mes_selecionado === $mes_ano) ? 'active' : '';
+                                    
+                                    echo "<div class='col-6 col-md-3 col-lg-2'>";
+                                    echo "<a href='?mes=$mes_ano' class='btn btn-outline-primary w-100 $ativo' style='";
+                                    if ($ativo) echo "background-color: #1a237e !important; color: white !important; border-color: #1a237e !important;";
+                                    echo "'>";
+                                    echo "<div class='fw-bold'>$mes_nome</div>";
+                                    echo "<small>$ano ($tem_os)</small>";
+                                    echo "</a>";
+                                    echo "</div>";
+                                }
+                                ?>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Exibir OS do Mês Selecionado -->
+                <div class="row">
+                    <?php if (empty($os_historico)): ?>
+                        <div class="col-12 text-center p-5 text-muted bg-white rounded-3 shadow-sm">Selecione um mês para visualizar as ordens de serviço finalizadas.</div>
+                    <?php else: ?>
+                        <?php foreach ($os_historico as $os): ?>
+                            <div class="col-md-4">
+                                <div class="os-card p-4 bg-white rounded shadow-sm mb-3">
+                                    <div class="d-flex justify-content-between mb-3">
+                                        <span class="fw-bold" style="color: #1a237e !important;">#<?php echo $os['numero']; ?></span>
+                                        <span class="status-badge status-finalizada">Finalizada</span>
+                                    </div>
+                                    <h6 class="fw-bold mb-1"><?php echo htmlspecialchars($os['cliente_nome']); ?></h6>
+                                    <p class="text-muted small mb-1"><?php echo $os['modelo']; ?> - <?php echo $os['placa']; ?></p>
+                                    <p class="text-muted small mb-3">Finalizada em: <?php echo date('d/m/Y', strtotime($os['data_finalizacao'])); ?></p>
+                                    <div class="d-grid gap-2">
+                                        <button class="btn btn-outline-dark btn-sm fw-bold" onclick="verDetalhes(<?php echo $os['id']; ?>)">VER ANTES / DEPOIS</button>
+                                        <a href="emitir_nota.php?os_id=<?php echo $os['id']; ?>" class="btn btn-success btn-sm fw-bold"><i class="bi bi-file-pdf me-1"></i> EMITIR NOTA</a>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
