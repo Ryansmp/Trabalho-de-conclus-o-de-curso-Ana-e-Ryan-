@@ -386,7 +386,7 @@ $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#pendente">Aguardando Checklist <span class="badge bg-warning text-dark ms-2"><?php echo count($os_pendentes); ?></span></button></li>
             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#andamento">Em Andamento <span class="badge bg-primary ms-2"><?php echo count($os_em_andamento); ?></span></button></li>
             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#finalizada">Finalizadas <span class="badge bg-success ms-2"><?php echo count($os_finalizadas); ?></span></button></li>
-            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#historico">Histórico <span class="badge bg-info ms-2"><?php echo count($os_finalizadas); ?></span></button></li>
+            <li class="nav-item"><button class="nav-link<?php echo ($mes_selecionado ? ' active' : ''); ?>" data-bs-toggle="tab" data-bs-target="#historico">Histórico <span class="badge bg-info ms-2"><?php echo count($os_finalizadas); ?></span></button></li>
         </ul>
 
         <div class="tab-content">
@@ -495,7 +495,7 @@ $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     $ativo = ($mes_selecionado === $mes_ano) ? 'active' : '';
                                     
                                     echo "<div class='col-6 col-md-3 col-lg-2'>";
-                                    echo "<a href='?mes=$mes_ano' class='btn btn-outline-primary w-100 $ativo' style='";
+                                    echo "<a href='?mes=$mes_ano#historico' class='btn btn-outline-primary w-100 $ativo' style='";
                                     if ($ativo) echo "background-color: #1a237e !important; color: white !important; border-color: #1a237e !important;";
                                     echo "'>";
                                     echo "<div class='fw-bold'>$mes_nome</div>";
