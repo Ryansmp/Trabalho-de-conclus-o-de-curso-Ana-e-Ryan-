@@ -484,13 +484,12 @@ $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 ];
                                 $ano_atual = date('Y');
                                 
-                                // Mostrar últimos 12 meses
-                                for ($i = 0; $i < 12; $i++) {
-                                    $timestamp = strtotime("-$i months");
-                                    $mes_ano = date('Y-m', $timestamp);
-                                    $mes_num = date('m', $timestamp);
-                                    $ano = date('Y', $timestamp);
-                                    $mes_nome = $meses_nomes[$mes_num];
+                                // Mostrar todos os 12 meses em ordem (Janeiro a Dezembro)
+                                $ano_atual = date('Y');
+                                for ($mes = 1; $mes <= 12; $mes++) {
+                                    $mes_formatado = str_pad($mes, 2, '0', STR_PAD_LEFT);
+                                    $mes_ano = "$ano_atual-$mes_formatado";
+                                    $mes_nome = $meses_nomes[$mes_formatado];
                                     $tem_os = isset($os_por_mes[$mes_ano]) ? count($os_por_mes[$mes_ano]) : 0;
                                     $ativo = ($mes_selecionado === $mes_ano) ? 'active' : '';
                                     
@@ -499,7 +498,7 @@ $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     if ($ativo) echo "background-color: #1a237e !important; color: white !important; border-color: #1a237e !important;";
                                     echo "'>";
                                     echo "<div class='fw-bold'>$mes_nome</div>";
-                                    echo "<small>$ano ($tem_os)</small>";
+                                    echo "<small>$ano_atual ($tem_os)</small>";
                                     echo "</a>";
                                     echo "</div>";
                                 }
