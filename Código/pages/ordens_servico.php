@@ -386,12 +386,12 @@ $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#pendente">Aguardando Checklist <span class="badge bg-warning text-dark ms-2"><?php echo count($os_pendentes); ?></span></button></li>
             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#andamento">Em Andamento <span class="badge bg-primary ms-2"><?php echo count($os_em_andamento); ?></span></button></li>
             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#finalizada">Finalizadas <span class="badge bg-success ms-2"><?php echo count($os_finalizadas); ?></span></button></li>
-            <li class="nav-item"><button class="nav-link<?php echo ($mes_selecionado ? ' active' : ''); ?>" data-bs-toggle="tab" data-bs-target="#historico">Histórico <span class="badge bg-info ms-2"><?php echo count($os_finalizadas); ?></span></button></li>
+            <li class="nav-item"><button class="nav-link" id="historicoTab" data-bs-toggle="tab" data-bs-target="#historico">Histórico <span class="badge bg-info ms-2"><?php echo count($os_finalizadas); ?></span></button></li>
         </ul>
 
         <div class="tab-content">
             <!-- ABA PENDENTE -->
-            <div class="tab-pane fade show active" id="pendente">
+            <div class="tab-pane fade<?php echo (!$mes_selecionado ? ' show active' : ''); ?>" id="pendente">
                 <div class="row">
                     <?php if (empty($os_pendentes)): ?>
                         <div class="col-12 text-center p-5 text-muted bg-white rounded-3 shadow-sm">Nenhuma ordem de serviço aguardando checklist.</div>
@@ -469,7 +469,7 @@ $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
             </div>
 
             <!-- ABA HISTÓRICO -->
-            <div class="tab-pane fade" id="historico">
+            <div class="tab-pane fade<?php echo ($mes_selecionado ? ' show active' : ''); ?>" id="historico">
                 <!-- Seleção de Meses -->
                 <div class="row mb-4">
                     <div class="col-12">
@@ -494,12 +494,12 @@ $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     $ativo = ($mes_selecionado === $mes_ano) ? 'active' : '';
                                     
                                     echo "<div class='col-6 col-md-3 col-lg-2'>";
-                                    echo "<a href='?mes=$mes_ano#historico' class='btn btn-outline-primary w-100 $ativo' style='";
+                                    echo "<button type='button' class='btn btn-outline-primary w-100 $ativo' onclick='selecionarMes(\"$mes_ano\")' style='";
                                     if ($ativo) echo "background-color: #1a237e !important; color: white !important; border-color: #1a237e !important;";
                                     echo "'>";
                                     echo "<div class='fw-bold'>$mes_nome</div>";
                                     echo "<small>$ano_atual ($tem_os)</small>";
-                                    echo "</a>";
+                                    echo "</button>";
                                     echo "</div>";
                                 }
                                 ?>
@@ -652,6 +652,26 @@ $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="../js/main.js"></script>
     <script>
+        // Funcao para selecionar mes e recarregar
+        function selecionarMes(mes) {
+            window.location.href = `?mes=${mes}`;
+        }
+        
+        // Ativar aba Historico se houver parametro 'mes' na URL
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const mesParam = urlParams.get('mes');
+            
+            if (mesParam) {
+                // Ativar a aba Historico usando Bootstrap Tab
+                const historicoTab = document.getElementById('historicoTab');
+                if (historicoTab) {
+                    const tab = new bootstrap.Tab(historicoTab);
+                    tab.show();
+                }
+            }
+        });
+
         function adicionarItemOrcamento() {
             const container = document.getElementById('orcamento-itens');
             const div = document.createElement('div');
