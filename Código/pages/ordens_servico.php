@@ -663,9 +663,23 @@ $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
             const mesParam = urlParams.get('mes');
             
             if (mesParam) {
-                // Ativar a aba Historico usando Bootstrap Tab
+                // Remover classes active de todas as abas
+                document.querySelectorAll('.tab-pane').forEach(el => {
+                    el.classList.remove('show', 'active');
+                });
+                document.querySelectorAll('.nav-link').forEach(el => {
+                    el.classList.remove('active');
+                });
+                
+                // Ativar a aba Historico
                 const historicoTab = document.getElementById('historicoTab');
-                if (historicoTab) {
+                const historicoPane = document.getElementById('historico');
+                
+                if (historicoTab && historicoPane) {
+                    historicoTab.classList.add('active');
+                    historicoPane.classList.add('show', 'active');
+                    
+                    // Usar Bootstrap Tab tambem
                     const tab = new bootstrap.Tab(historicoTab);
                     tab.show();
                 }
