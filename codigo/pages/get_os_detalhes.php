@@ -49,9 +49,9 @@ $total = 0;
                     <?php foreach ($midias as $m): ?>
     <div class="col-4">
         <?php if ($m['tipo'] === 'video'): ?>
-                                <video src="/<?php echo $m['arquivo_url']; ?>" style="width:100%; height:80px; object-fit:cover; border-radius:5px;" controls></video>
+                                <video src="/codigo/<?php echo $m['arquivo_url']; ?>" style="width:100%; height:80px; object-fit:cover; border-radius:5px;" controls></video>
                             <?php else: ?>
-                                <img src="/<?php echo $m['arquivo_url']; ?>" style="width:100%; height:80px; object-fit:cover; border-radius:5px; cursor:pointer;" onclick="window.open(this.src)">
+                                <img src="/codigo/<?php echo $m['arquivo_url']; ?>" style="width:100%; height:80px; object-fit:cover; border-radius:5px; cursor:pointer;" onclick="window.open(this.src)">
                             <?php endif; ?>
     </div>
 <?php endforeach; ?>
