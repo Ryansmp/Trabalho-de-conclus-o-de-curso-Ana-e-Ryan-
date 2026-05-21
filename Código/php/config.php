@@ -16,12 +16,11 @@ try {
 
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-    echo "Conexão realizada com sucesso!";
+    echo "";
 
 } catch (PDOException $e) {
 
-    die("Erro de conexão: " . $e->getMessage());
+    exit;
 
 }
 
-?>
