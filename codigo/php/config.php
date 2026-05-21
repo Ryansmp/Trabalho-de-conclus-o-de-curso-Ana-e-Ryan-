@@ -1,10 +1,9 @@
 <?php
 
-$host = 'trolley.proxy.rlwy.net';
+$host = 'localhost';
 $db = 'oficina360';
 $user = 'root';
-$password = 'rSUcnUdLsveZesxJUOdUlcIYyNHXyzaC';
-$port = '54353';
+$password = '';
 
 try {
 
