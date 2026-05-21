@@ -2,6 +2,7 @@
 require_once '../php/config.php';
 require_once '../php/check_session.php';
 /** @var PDO $pdo */
+
 $os_id = $_GET['os_id'] ?? null;
 if (!$os_id) exit("ID inválido.");
 
@@ -46,14 +47,14 @@ $total = 0;
                     <div class="col-12 text-muted small italic">Nenhuma mídia registrada na entrada.</div>
                 <?php else: ?>
                     <?php foreach ($midias as $m): ?>
-                        <div class="col-4">
-                            <?php if ($m['tipo'] === 'video'): ?>
-                                <video src="<?php echo $m['arquivo_url']; ?>" style="width:100%; height:80px; object-fit:cover; border-radius:5px;" controls></video>
+    <div class="col-4">
+        <?php if ($m['tipo'] === 'video'): ?>
+                                <video src="/Código/<?php echo $m['arquivo_url']; ?>" style="width:100%; height:80px; object-fit:cover; border-radius:5px;" controls></video>
                             <?php else: ?>
-                                <img src="<?php echo $m['arquivo_url']; ?>" style="width:100%; height:80px; object-fit:cover; border-radius:5px; cursor:pointer;" onclick="window.open(this.src)">
+                                <img src="/Código/<?php echo $m['arquivo_url']; ?>" style="width:100%; height:80px; object-fit:cover; border-radius:5px; cursor:pointer;" onclick="window.open(this.src)">
                             <?php endif; ?>
-                        </div>
-                    <?php endforeach; ?>
+    </div>
+<?php endforeach; ?>
                 <?php endif; ?>
             </div>
         </div>
